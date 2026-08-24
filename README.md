@@ -30,7 +30,7 @@
   <img src="https://img.shields.io/badge/SonarQube-Quality%20Gate-4E9BCD.svg?style=flat-square&logo=sonarqube&logoColor=white" alt="SonarQube" />
   <img src="https://img.shields.io/badge/Kaniko-Rootless%20Builds-FF6F00.svg?style=flat-square&logo=docker&logoColor=white" alt="Kaniko" />
   <img src="https://img.shields.io/badge/Helm-v3%20%2F%20v4-0F1689.svg?style=flat-square&logo=helm&logoColor=white" alt="Helm" />
-  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License" />
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nubenetes/jenkins-backstage-gitops-patterns?style=flat-square&color=blue" alt="License" /></a>
 </p>
 
 <p align="center">
@@ -477,6 +477,7 @@ To protect the central controller from broken configurations:
 ```text
 .
 ├── README.md                          # Comprehensive documentation, comparison, and diagrams
+├── LICENSE                            # Apache License 2.0
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                     # GitHub Actions: Linting, validation & Job DSL simulation
@@ -718,5 +719,6 @@ This architecture blueprint is synthesized from deep enterprise research, open-s
 
 <a id="license"></a>
 ## 📜 License
-This project is licensed under the Apache License 2.0. Reference implementation provided by **nubenetes**.
+This project is open-source software licensed under the [Apache License 2.0](LICENSE). Reference implementation provided by **nubenetes**.
+See the [LICENSE](LICENSE) file for complete details.
 
