@@ -276,12 +276,33 @@ Pattern B represents an **inventory-driven GitOps model** where application repo
 The Job DSL Seed Job (`job-dsl/seed-job-pattern-b.groovy`) executes a 6-stage provisioning lifecycle:
 
 ```mermaid
-flowchart LR
-    A["1. Slurp YAML Inventories\n(dev.yaml, pre.yaml, pro.yaml)"] --> B["2. Read Shared Template\n(readFileFromWorkspace)"]
-    B --> C["3. Create Environment & Team Folders\n(dev/e-commerce)"]
-    C --> D["4. Bind Dynamic Parameters\n(JVM, CPU, Memory, Namespace)"]
-    D --> E["5. Direct CPS Pipeline Injection\ndefinition { cps { script(...) } }"]
-    E --> F["6. Automated Garbage Collection\nremovedJobAction('DELETE')"]
+flowchart TD
+    subgraph Phase1["📥 Phase 1: Input Ingestion"]
+        A["<b>1. Parse YAML Inventories</b><br/><code>inventories/{dev,pre,pro}.yaml</code><br/><i>Parsed via YamlSlurper</i>"]
+        B["<b>2. Ingest Central Template</b><br/><code>jenkins-templates/SharedJenkinsfile</code><br/><i>Loaded via readFileFromWorkspace</i>"]
+    end
+
+    subgraph Phase2["⚙️ Phase 2: Hierarchy & Binding"]
+        C["<b>3. Provision Folder Hierarchy</b><br/><code>&lt;env&gt; / &lt;team&gt; / &lt;app&gt;</code><br/><i>(e.g., dev/e-commerce/store-gateway)</i>"]
+        D["<b>4. Dynamic Parameter Binding</b><br/>• Git Repo URL & Branch<br/>• JVM Memory & Resource Limits<br/>• Target Namespace & Replicas"]
+    end
+
+    subgraph Phase3["🚀 Phase 3: Pipeline Injection & Lifecycle"]
+        E["<b>5. Direct CPS Script Injection</b><br/><code>definition { cps { script(...) } }</code><br/><i>Full Replay & GUI Transparency Active</i>"]
+        F["<b>6. Zero-Touch Garbage Collection</b><br/><code>removedJobAction('DELETE')</code><br/><i>Auto-purges orphaned pipelines</i>"]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+
+    classDef default fill:#ffffff,stroke:#4a5568,stroke-width:1.5px;
+    classDef phaseBox fill:#f7fafc,stroke:#cbd5e0,stroke-width:1.5px;
+    classDef coreStep fill:#ebf8ff,stroke:#3182ce,stroke-width:2px;
+    class Phase1,Phase2,Phase3 phaseBox;
+    class E coreStep;
 ```
 
 #### Step-by-Step Mechanics:
