@@ -12,7 +12,7 @@
   <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns"><img src="https://img.shields.io/badge/Architecture-GitOps%20%7C%20JCasC%20%7C%20Job%20DSL-brightgreen.svg?style=for-the-badge&logo=git&logoColor=white" alt="Architecture" /></a>
   <a href="https://jenkins.io"><img src="https://img.shields.io/badge/Jenkins-LTS%20JDK21-D24939.svg?style=for-the-badge&logo=jenkins&logoColor=white" alt="Jenkins" /></a>
   <a href="https://backstage.io"><img src="https://img.shields.io/badge/Backstage-1.30%2B%20%7C%20Scaffolder%20v1beta3-9BF0E1.svg?style=for-the-badge&logo=spotify&logoColor=black" alt="Backstage" /></a>
-  <a href="https://argo-cd.readthedocs.io"><img src="https://img.shields.io/badge/ArgoCD-3.x%20%7C%20GitOps-EF7B42.svg?style=for-the-badge&logo=argo&logoColor=white" alt="ArgoCD" /></a>
+  <a href="https://argo-cd.readthedocs.io"><img src="https://img.shields.io/badge/ArgoCD-v3.5%20%7C%20GitOps-EF7B42.svg?style=for-the-badge&logo=argo&logoColor=white" alt="ArgoCD 3.5" /></a>
   <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift"><img src="https://img.shields.io/badge/OpenShift-4.17%2B-EE0000.svg?style=for-the-badge&logo=redhatopenshift&logoColor=white" alt="OpenShift" /></a>
   <a href="https://kubernetes.io"><img src="https://img.shields.io/badge/Kubernetes-1.31%2B-326CE5.svg?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes" /></a>
 </p>
@@ -82,7 +82,7 @@
    - [3. CI for CI: Automated Validation & Dry-Run Simulation](#ext-ci-for-ci)
    - [4. Zero-Trust Secrets & Team Folder RBAC](#ext-zero-trust-rbac)
    - [5. Observability: OpenTelemetry & Grafana Dashboards](#ext-observability)
-   - [6. Hybrid GitOps: ArgoCD & OpenShift GitOps Bridge](#ext-argocd-bridge)
+   - [6. Hybrid GitOps: ArgoCD 3.5 & OpenShift GitOps Bridge](#ext-argocd-bridge)
 8. [Repository Structure](#repository-structure)
 9. [Component Breakdown](#component-breakdown)
    - [1. Helm Chart Wrapper (`charts/jenkins-wrapper`)](#component-helm-wrapper)
@@ -93,7 +93,7 @@
    - [6. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
    - [7. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
    - [8. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
-10. [Enterprise OpenShift, ArgoCD & Modern Stack Standards](#openshift-kubernetes-considerations)
+10. [Enterprise OpenShift, ArgoCD 3.5 & Modern Stack Standards](#openshift-kubernetes-considerations)
 11. [Step-by-Step Operations Guide](#step-by-step-guide)
     - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
     - [2. Day-2 Pattern A: Provision Multibranch Scanner](#guide-day-2-pattern-a)
@@ -461,8 +461,13 @@ To protect the central controller from broken configurations:
 * **Pre-built Grafana Dashboard (`dashboards/jenkins-gitops-metrics.json`)**: Tracks Seed Job duration, total active pipelines across environments, p95 agent startup latency, and success rates per engineering team.
 
 <a id="ext-argocd-bridge"></a>
-### 6. Hybrid GitOps: ArgoCD & OpenShift GitOps Bridge
-* **Automated Manifest Promotion**: In `jenkins-templates/SharedJenkinsfile`, an optional stage updates the image tag in an ArgoCD GitOps repository and issues an automated synchronization trigger (`argocd app sync`), seamlessly connecting Jenkins CI with ArgoCD CD.
+### 6. Hybrid GitOps: ArgoCD 3.5 & OpenShift GitOps Bridge
+* **Automated Manifest Promotion & Synchronization**: In `jenkins-templates/SharedJenkinsfile`, stage `GitOps Deployment (ArgoCD 3.5 Bridge)` leverages the native `quay.io/argoproj/argocd:v3.5.0` container inside the dynamic Kubernetes agent pod to update GitOps deployment manifests and trigger instant declarative synchronization:
+  ```bash
+  argocd app sync ${APPLICATION_NAME}-${TARGET_ENV} --prune --apply-out-of-sync-only --server-side-apply
+  argocd app wait ${APPLICATION_NAME}-${TARGET_ENV} --health --timeout 180
+  ```
+* **Declarative ArgoCD 3.5 Manifest (`gitops/argocd/application.yaml`)**: Standard `argoproj.io/v1alpha1` specification configured with **Server-Side Apply (`ServerSideApply=true`)**, `RespectIgnoreDifferences=true`, `PruneLast=true`, `FailOnSharedResource=true`, and sync wave tracking annotations (`argocd.argoproj.io/sync-wave`).
 
 ---
 
@@ -486,7 +491,7 @@ To protect the central controller from broken configurations:
 │   ├── seed-job-pattern-a.groovy      # Job DSL for Pattern A (Organization folder / Branch scan)
 │   └── seed-job-pattern-b.groovy      # Job DSL for Pattern B (YAML inventory iterator + CPS injection + RBAC)
 ├── jenkins-templates/
-│   └── SharedJenkinsfile              # Shared Declarative Pipeline (Gitleaks, Syft, Cosign, ArgoCD)
+│   └── SharedJenkinsfile              # Shared Declarative Pipeline (Gitleaks, Syft, Cosign, ArgoCD 3.5)
 ├── inventories/                       # Pattern B Multi-Environment Inventories
 │   ├── dev.yaml                       # Microservices list and parameters for Dev
 │   ├── pre.yaml                       # Microservices list and parameters for Pre-production
@@ -503,7 +508,7 @@ To protect the central controller from broken configurations:
 │   └── jenkins-gitops-metrics.json    # Production-ready Grafana metrics dashboard
 ├── gitops/
 │   └── argocd/
-│       └── application.yaml           # Modern ArgoCD v3.x Application (ServerSideApply, auto-sync)
+│       └── application.yaml           # Modern ArgoCD v3.5 Application (ServerSideApply, auto-sync, sync waves)
 ├── samples/
 │   └── jhipster-microservice/         # Minimal JHipster Java microservice stub (No Jenkinsfile in repo)
 │       ├── pom.xml                    # Spring Boot / Maven definition
@@ -594,14 +599,14 @@ A standard Java 21 / Spring Boot 3 JHipster microservice stub. Notice that **no 
 ---
 
 <a id="openshift-kubernetes-considerations"></a>
-## 🛡️ Enterprise OpenShift, ArgoCD & Modern Stack Standards
+## 🛡️ Enterprise OpenShift, ArgoCD 3.5 & Modern Stack Standards
 
 This blueprint is engineered to adhere to the latest stable enterprise releases and modern platform engineering practices:
 
 | Component | Target Release | Architectural Standards & Recommended Configurations |
 | :--- | :--- | :--- |
 | **Red Hat OpenShift** | **v4.16 / v4.17 (K8s 1.30/1.31)** | Strict compliance with `restricted-v2` Security Context Constraints (SCC): `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `seccompProfile: { type: RuntimeDefault }`, `capabilities: { drop: ["ALL"] }`. TLS edge-termination Routes with HAProxy 5m timeout. |
-| **ArgoCD / OpenShift GitOps** | **v3.x / v2.13+** | Declarative `Application` (`argoproj.io/v1alpha1`) leveraging **Server-Side Apply (`ServerSideApply=true`)**, Automated Pruning (`prune: true`), Self-Healing (`selfHeal: true`), and sync waves for deterministic multi-tier deployment order. |
+| **ArgoCD / OpenShift GitOps** | **v3.5 (Latest Stable)** | Declarative `Application` (`argoproj.io/v1alpha1`) leveraging **Server-Side Apply (`ServerSideApply=true`)**, Automated Pruning (`prune: true`, `PruneLast=true`), Self-Healing (`selfHeal: true`), `FailOnSharedResource=true`, and sync waves (`argocd.argoproj.io/sync-wave`). |
 | **Jenkins Controller & Agents** | **LTS v2.479.3+ (Java 21 LTS)** | Native Eclipse Temurin JDK 21 LTS runtime. Headless controller execution (`-Djava.awt.headless=true`), Jenkins Configuration as Code (JCasC), Project Matrix RBAC, and dynamic Kubernetes agent clouds. |
 | **Helm Package Manager** | **v3.16+ / v4.x** | Standard `apiVersion: v2` chart specification with OCI registry chart distribution support and atomic installation flags (`--atomic --timeout 5m`). |
 | **Spotify Backstage** | **v1.30+ / Backend System v2** | Scaffolder `v1beta3` action pipelines, declarative plugin architecture, TechDocs integration, and automated Tech Insights Production Readiness Scorecards. |

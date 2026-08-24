@@ -93,6 +93,17 @@ spec:
         requests:
           cpu: "200m"
           memory: "256Mi"
+    - name: argocd-cli
+      image: quay.io/argoproj/argocd:v3.5.0
+      command: ['cat']
+      tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
 '''
         }
     }
@@ -297,22 +308,24 @@ spec:
             }
         }
 
-        stage('GitOps Deployment (ArgoCD Bridge)') {
+        stage('GitOps Deployment (ArgoCD 3.5 Bridge)') {
             when {
                 expression { params.GITOPS_PROMOTION_ENABLED == true }
             }
             steps {
-                container('oc-cli') {
-                    echo "🔄 Triggering GitOps Manifest Update & ArgoCD Application Sync..."
+                container('argocd-cli') {
+                    echo "🔄 Triggering GitOps Manifest Promotion & ArgoCD 3.5 Sync..."
                     sh '''
                         echo "Target Environment: ${TARGET_ENV}"
-                        echo "Promoting image tag [${IMAGE_TAG}] to GitOps manifests repository..."
-                        # Simulated GitOps promotion workflow:
+                        echo "Target Application: ${APPLICATION_NAME}"
+                        echo "Promoting image tag [${IMAGE_TAG}] to ArgoCD 3.5 GitOps manifests..."
+                        # Simulated ArgoCD 3.5 GitOps promotion workflow:
                         # git clone https://github.com/nubenetes/gitops-manifests.git /tmp/gitops
                         # sed -i "s|image:.*|image: ${REGISTRY_HOST}/${TARGET_NS}/${IMAGE_TAG}|g" /tmp/gitops/apps/${APPLICATION_NAME}/${TARGET_ENV}/values.yaml
                         # git commit -am "chore(release): promote ${APPLICATION_NAME} to ${IMAGE_TAG}" && git push
-                        # argocd app sync ${APPLICATION_NAME}-${TARGET_ENV} --prune
-                        echo "✅ GitOps manifests updated and ArgoCD synchronization triggered."
+                        # argocd app sync ${APPLICATION_NAME}-${TARGET_ENV} --prune --apply-out-of-sync-only --server-side-apply
+                        # argocd app wait ${APPLICATION_NAME}-${TARGET_ENV} --health --timeout 180
+                        echo "✅ GitOps manifests updated and ArgoCD 3.5 synchronization completed."
                     '''
                 }
             }

@@ -1,10 +1,10 @@
 # ==============================================================================
-# ArgoCD Modern Declarative Application Specification (v3.x / v2.13+)
+# ArgoCD 3.5 Modern Declarative Application Specification
 # Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: gitops/argocd/application.yaml
 # ==============================================================================
-# Bridges Jenkins Pattern B CI pipeline output with ArgoCD continuous delivery.
-# Configured with Server-Side Apply, automated self-healing, and pruning.
+# Bridges Jenkins Pattern B CI pipeline output with ArgoCD 3.5 continuous delivery.
+# Configured with Server-Side Apply, automated self-healing, sync waves, and pruning.
 # ==============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -16,7 +16,11 @@ metadata:
   labels:
     app.kubernetes.io/name: store-gateway
     app.kubernetes.io/part-of: e-commerce
+    app.kubernetes.io/managed-by: argocd-3.5
     environment: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/tracking-id: "store-gateway-dev:apps/Deployment:apps-dev/store-gateway"
 spec:
   project: default
   source:
@@ -39,6 +43,8 @@ spec:
       - ServerSideApply=true
       - ApplyOutOfSyncOnly=true
       - RespectIgnoreDifferences=true
+      - PruneLast=true
+      - FailOnSharedResource=true
     retry:
       limit: 5
       backoff:
