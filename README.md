@@ -56,24 +56,34 @@
 3. [Architectural Comparison: Pattern A vs. Pattern B](#architectural-comparison)
 4. [System Architecture & Lifecycle Flows (Mermaid)](#system-architecture-flows)
    - [Flow 1: Day-1 Bootstrap (JCasC & Seed Job Initialization)](#flow-1-bootstrap)
-   - [Flow 2: Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)](#flow-2-operations)
-   - [Flow 3: Decommissioning & Automated Garbage Collection](#flow-3-decommissioning)
-5. [Deep Dive: Why Direct Pipeline Injection Over Shared Libraries?](#deep-dive-injection)
-6. [Repository Structure](#repository-structure)
-7. [Component Breakdown](#component-breakdown)
+   - [Flow 2: Pattern A Reactive Lifecycle (Backstage → App Repo with Jenkinsfile → Branch Scanner)](#flow-2-pattern-a-lifecycle)
+   - [Flow 3: Pattern B Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)](#flow-3-operations)
+   - [Flow 4: Pattern B Decommissioning & Automated Garbage Collection](#flow-4-decommissioning)
+5. [Deep Dive: Pattern A (Reactive Multibranch & Org Discovery)](#deep-dive-pattern-a)
+   - [Core Mechanics & Job DSL Engine](#pattern-a-mechanics)
+   - [The Backstage Scaffolder Flow in Pattern A](#pattern-a-backstage)
+   - [Enterprise Pitfalls: The 200 Repos PR Problem & Shared Library Traps](#pattern-a-pitfalls)
+   - [When to Use Pattern A](#when-to-use-pattern-a)
+6. [Deep Dive: Pattern B (Git-Backed Centralized Seed Job)](#deep-dive-pattern-b)
+   - [Why Direct Pipeline Injection Over Shared Libraries?](#deep-dive-injection)
+   - [Dynamic Inventory Parameterization & Garbage Collection](#pattern-b-inventory-mechanics)
+7. [Repository Structure](#repository-structure)
+8. [Component Breakdown](#component-breakdown)
    - [1. Helm Chart Wrapper (`charts/jenkins-wrapper`)](#component-helm-wrapper)
    - [2. JCasC Definition (`bootstrap/jcasc-config.yaml`)](#component-jcasc-bootstrap)
-   - [3. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)](#component-job-dsl-engine)
-   - [4. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)](#component-shared-jenkinsfile)
-   - [5. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
-   - [6. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
-   - [7. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
-8. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
-9. [Step-by-Step Operations Guide](#step-by-step-guide)
+   - [3. Job DSL Pattern A Engine (`job-dsl/seed-job-pattern-a.groovy`)](#component-job-dsl-pattern-a)
+   - [4. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)](#component-job-dsl-engine)
+   - [5. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)](#component-shared-jenkinsfile)
+   - [6. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
+   - [7. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
+   - [8. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
+9. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
+10. [Step-by-Step Operations Guide](#step-by-step-guide)
    - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
-   - [2. Day-2: Register a New Application (Simulating Backstage)](#guide-day-2-register)
-   - [3. Day-3: Decommission an Application](#guide-day-3-decommission)
-10. [License](#license)
+   - [2. Day-2 Pattern A: Provision Multibranch Scanner](#guide-day-2-pattern-a)
+   - [3. Day-2 Pattern B: Register a New Application](#guide-day-2-register)
+   - [4. Day-3 Pattern B: Decommission an Application](#guide-day-3-decommission)
+11. [License](#license)
 
 ---
 
@@ -132,9 +142,34 @@ sequenceDiagram
 
 ---
 
-<a id="flow-2-operations"></a>
-### Flow 2: Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)
-This flow demonstrates a developer scaffolding a new JHipster microservice via Backstage, which registers the service in GitOps inventories and automatically yields an active, replayable Jenkins pipeline.
+<a id="flow-2-pattern-a-lifecycle"></a>
+### Flow 2: Pattern A Reactive Lifecycle (Backstage → App Repo with Jenkinsfile → Branch Scanner)
+This flow demonstrates the classic Pattern A architecture: Backstage scaffolds an application containing a local `Jenkinsfile`, and Jenkins reactively discovers branches through organization scanning.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+    participant BS as Backstage Portal (Scaffolder)
+    participant AppRepo as App Git Repo (Contains Jenkinsfile)
+    participant Webhook as GitHub / GitLab Webhook
+    participant OrgScanner as Jenkins Org / Multibranch Scanner
+    participant BranchJob as Auto-Created Branch Pipeline (Jenkins)
+
+    Dev->>BS: Select "JHipster Pattern A (Local Jenkinsfile)"
+    BS->>AppRepo: Create repository with Java code + embedded Jenkinsfile
+    AppRepo->>Webhook: Webhook push event (new repository / branch created)
+    Webhook->>OrgScanner: Triggers Organization Scanning / Indexing
+    OrgScanner->>AppRepo: Scans repo & locates "Jenkinsfile" on branch
+    OrgScanner->>BranchJob: Automatically generates branch pipeline (e.g., develop, PR-1)
+    BranchJob->>BranchJob: Executes pipeline logic defined in repository's Jenkinsfile
+```
+
+---
+
+<a id="flow-3-operations"></a>
+### Flow 3: Pattern B Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)
+This flow demonstrates a developer scaffolding a new JHipster microservice via Backstage in Pattern B, registering the service in GitOps inventories without any CI code in the app repo.
 
 ```mermaid
 sequenceDiagram
@@ -161,8 +196,8 @@ sequenceDiagram
 
 ---
 
-<a id="flow-3-decommissioning"></a>
-### Flow 3: Decommissioning & Automated Garbage Collection
+<a id="flow-4-decommissioning"></a>
+### Flow 4: Pattern B Decommissioning & Automated Garbage Collection
 This flow shows how simple deletion of metadata in the Git inventory safely purges Jenkins pipelines and folders without manual operator intervention.
 
 ```mermaid
@@ -183,24 +218,70 @@ sequenceDiagram
 
 ---
 
-<a id="deep-dive-injection"></a>
-## 🔍 Deep Dive: Why Direct Pipeline Injection Over Shared Libraries?
+<a id="deep-dive-pattern-a"></a>
+## 🔍 Deep Dive: Pattern A (Reactive Multibranch & Org Discovery)
 
-In standard enterprise Jenkins setups, teams frequently use **Jenkins Shared Libraries (JSL)** (e.g. `@Library('my-shared-lib') _`). While JSL has historically been popular, it introduces severe architectural friction at scale:
+<a id="pattern-a-mechanics"></a>
+### Core Mechanics & Job DSL Engine
+In **Pattern A**, the continuous integration architecture relies on the **GitHub Branch Source Plugin** (or GitLab/Bitbucket equivalents) configured via `job-dsl/seed-job-pattern-a.groovy`.
 
-1. **The "Replay Pipeline" Death Trap**:
-   When a developer clicks **Replay** in the Jenkins UI, Jenkins only allows editing the entry-point `Jenkinsfile`. Code encapsulated in remote Shared Library classes (`vars/*.groovy`, `src/**/*.groovy`) cannot be modified in the replay editor. Direct injection via `definition { cps { script(injectedPipelineCode) } }` puts the complete pipeline script into the job definition, making the entire pipeline interactive and editable during replay debugging.
+Key mechanisms include:
+1. **Organization Folders (`organizationFolder`)**: Automatically monitors an entire GitHub organization (e.g. `github.com/nubenetes`) for repositories containing a marker file (`Jenkinsfile` by default).
+2. **Branch & PR Discovery Traits**:
+   - `gitHubBranchDiscovery()`: Finds all matching active branches.
+   - `sourceRegexFilter('^(main|develop|feature/.*|release/.*)$')`: Filters out noise branches.
+   - `gitHubPullRequestDiscovery(strategyId: 1)`: Creates dynamic pull request pipelines merged with the target branch head revision to guarantee pre-merge testing.
+3. **Orphaned Item Strategy (`orphanedItemStrategy`)**: Automatically discards deleted branch jobs after a retention window (e.g., 7 days) to manage disk usage.
 
-2. **UI Transparency & Developer Autonomy**:
-   Shared libraries turn pipelines into opaque black boxes (e.g., `standardPipeline()`). Developers cannot inspect the exact logic, environment parameters, or execution steps from the Jenkins classic UI. With injected declarative templates, the script is directly visible under the job's **Pipeline Script** view.
+<a id="pattern-a-backstage"></a>
+### The Backstage Scaffolder Flow in Pattern A
+When a developer uses `backstage/templates/pattern-a-app-template.yaml`:
+1. The developer inputs the service name, owning team, and destination repository.
+2. Backstage uses `fetch:template` to generate the application source code **and embeds a static `Jenkinsfile` into the repository root**.
+3. Backstage publishes the new repo to GitHub via `publish:github`.
+4. The GitHub Webhook fires on the initial commit push.
+5. Jenkins Organization Folder picks up the new repo, identifies the `Jenkinsfile`, and automatically creates the Multibranch Pipeline without central inventory configuration.
 
-3. **Versioning & Blast Radius Isolation**:
-   A bug introduced in a centrally loaded `@Library('my-shared-lib@master')` can immediately break builds across thousands of repositories simultaneously. With Pattern B, template changes can be tested against individual environments (`dev.yaml` first, then `pre.yaml`, then `pro.yaml`) by branching the Seed Job configuration repository or applying environment-level template mappings.
+<a id="pattern-a-pitfalls"></a>
+### Enterprise Pitfalls: The "200 Repos PR Problem" & Shared Library Traps
+While Pattern A provides low initial friction on Day-1, enterprise platform engineering teams encounter severe Day-2 operational bottlenecks:
 
-4. **Eliminating Global Pipeline Sandbox Escapes**:
-   Directly injected declarative pipelines execute strictly within standard CPS sandbox constraints, preventing malicious or buggy shared library code from executing unsandboxed methods on the Jenkins master.
+1. **The 200 Repos PR Bottleneck**:
+   Suppose the security team mandates adding a container vulnerability scanner (e.g., Trivy or Prisma Cloud) to all CI pipelines. In Pattern A, the platform team must submit, review, and merge Pull Requests across **200+ distinct microservice repositories**. In practice, this results in weeks of backlog, merge conflicts, and high configuration drift as teams lag behind.
+
+2. **The Shared Library Anti-Pattern**:
+   To avoid modifying 200 `Jenkinsfile`s, teams often introduce a **Jenkins Shared Library (JSL)** (e.g. `@Library('enterprise-lib') _` calling `standardPipeline()`). While this centralizes logic, it introduces critical downsides:
+   - **Broken Replay Button**: Developers cannot edit or debug library methods (`vars/*.groovy`) in the Jenkins UI Replay view.
+   - **Opaque UI**: Pipeline logic is hidden behind a single method call, creating developer confusion during pipeline failures.
+   - **Global Blast Radius**: A syntax error in the Shared Library's `master` branch can simultaneously break every build in the enterprise.
+
+<a id="when-to-use-pattern-a"></a>
+### When to Use Pattern A
+Pattern A remains a suitable architectural choice when:
+* Teams are small or autonomous with completely heterogeneous, polyglot tech stacks (e.g., Go, Rust, Python, Java) requiring distinct pipeline structures.
+* Development teams have full ownership of their CI infrastructure and prefer local `Jenkinsfile` autonomy over centralized standardization.
 
 ---
+
+<a id="deep-dive-pattern-b"></a>
+## 🔍 Deep Dive: Pattern B (Git-Backed Centralized Seed Job)
+
+<a id="deep-dive-injection"></a>
+### Why Direct Pipeline Injection Over Shared Libraries?
+Pattern B solves the governance and debugging limitations of Pattern A and Shared Libraries by using **Direct CPS Script Injection**:
+* The Seed Job reads `jenkins-templates/SharedJenkinsfile` from the control workspace using `readFileFromWorkspace`.
+* The Seed Job injects the raw pipeline script directly into the job definition via `definition { cps { script(injectedPipelineCode) } }`.
+* **Full Replay Enabled**: The complete declarative pipeline code is physically stored inside the job definition, allowing developers to click **Replay**, edit stages or environment variables on the fly, and test fixes immediately.
+* **Instant Rollout**: Modifying `jenkins-templates/SharedJenkinsfile` in this repo updates all 200+ microservices on the next Seed Job run.
+
+<a id="pattern-b-inventory-mechanics"></a>
+### Dynamic Inventory Parameterization & Garbage Collection
+* Environments are split into `inventories/dev.yaml`, `inventories/pre.yaml`, and `inventories/pro.yaml`.
+* Application parameters (JVM memory flags, CPU/memory resource limits, OpenShift namespaces, replica counts) are passed into the pipeline execution runtime via dynamic job parameters.
+* **Automated Decommissioning**: When a microservice is removed from `inventories/dev.yaml`, Job DSL's `removedJobAction('DELETE')` automatically deletes the associated pipeline and cleanup folders.
+
+---
+
 
 <a id="repository-structure"></a>
 ## 📂 Repository Structure
@@ -254,10 +335,18 @@ Wraps the official Jenkins Helm Chart (`jenkins/jenkins`) and packages the requi
 Configures the Jenkins controller as code:
 * Sets up security realms and authorization matrices.
 * Defines the Kubernetes cloud provider with container agent specifications (`maven`, `kaniko`, `oc-cli`).
-* Provisions the initial bootstrap **Seed Job** that clones this repository and executes `job-dsl/seed-job-pattern-b.groovy`.
+* Provisions the initial bootstrap **Seed Jobs** (`Seed_Job_Pattern_A` and `Seed_Job_Pattern_B`) that clone this repository.
+
+<a id="component-job-dsl-pattern-a"></a>
+### 3. Job DSL Pattern A Engine (`job-dsl/seed-job-pattern-a.groovy`)
+A Groovy script configuring the reactive discovery engine:
+* **Organization Folder**: Configures GitHub Organization scanning (`organizationFolder`) across the `nubenetes` org.
+* **Discovery Traits**: Configures branch discovery regex filters (`main`, `develop`, `feature/*`, `release/*`), PR origin discovery, and fork trust levels.
+* **Orphaned Item Strategy**: Cleans up deleted branch jobs automatically after 7 days.
+* **Multibranch Pipelines**: Demonstrates standalone multi-branch scanners targeted at individual repositories containing a root `Jenkinsfile`.
 
 <a id="component-job-dsl-engine"></a>
-### 3. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)
+### 4. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)
 A Groovy script that:
 * Uses `groovy.yaml.YamlSlurper` to parse `inventories/dev.yaml`, `inventories/pre.yaml`, and `inventories/pro.yaml`.
 * Creates top-level environment folders (`dev`, `pre`, `pro`) and application subfolders.
@@ -267,7 +356,7 @@ A Groovy script that:
 * Configures `removedJobAction('DELETE')` and `removedViewAction('DELETE')` for zero-touch decommissioning.
 
 <a id="component-shared-jenkinsfile"></a>
-### 4. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)
+### 5. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)
 A declarative pipeline template for JHipster/Java microservices with:
 * **Dynamic Pod Agent**: Runs multi-container pods (`maven`, `sonar-scanner`, `kaniko`, `openshift-cli`).
 * **Environment-Aware Stages**:
@@ -277,7 +366,7 @@ A declarative pipeline template for JHipster/Java microservices with:
   * `Continuous Deployment`: GitOps sync / OpenShift deployment rollout to the target namespace.
 
 <a id="component-environment-inventories"></a>
-### 5. Environment Inventories (`inventories/*.yaml`)
+### 6. Environment Inventories (`inventories/*.yaml`)
 Structured configuration matrices defining the desired state of all microservices per environment:
 ```yaml
 environment: dev
@@ -297,12 +386,12 @@ applications:
 ```
 
 <a id="component-backstage-templates"></a>
-### 6. Backstage Scaffolder Templates (`backstage/templates`)
-* **`pattern-a-app-template.yaml`**: The classic template. Generates an application repository containing a static `Jenkinsfile` inside the app root.
+### 7. Backstage Scaffolder Templates (`backstage/templates`)
+* **`pattern-a-app-template.yaml`**: The classic template. Generates an application repository containing a static `Jenkinsfile` inside the app root for reactive branch discovery.
 * **`pattern-b-app-template.yaml`**: The GitOps inventory template. Clones the application boilerplate *without* a `Jenkinsfile`, then uses Backstage actions (`fetch:plain`, file append, and `publish:github:pull-request`) to submit a Pull Request to this configuration repository's `inventories/dev.yaml`.
 
 <a id="component-jhipster-microservice"></a>
-### 7. Sample JHipster Microservice (`samples/jhipster-microservice`)
+### 8. Sample JHipster Microservice (`samples/jhipster-microservice`)
 A standard Java 21 / Spring Boot 3 JHipster microservice stub. Notice that **no `Jenkinsfile` exists in this folder**, proving complete isolation between developer business code and platform CI/CD pipelines.
 
 ---
@@ -326,15 +415,24 @@ When running this architecture on Red Hat OpenShift:
 
 <a id="guide-day-1-bootstrap"></a>
 ### 1. Day-1: Bootstrap Jenkins Controller
-Deploy Jenkins with the Helm wrapper and bootstrap the Seed Job:
+Deploy Jenkins with the Helm wrapper and bootstrap the Seed Jobs:
 ```bash
 # Execute Day-1 bootstrap script
-./bin/bootstrap.sh --namespace jenkins-ci --environment dev
+./bin/bootstrap.sh jenkins-ci
+```
+
+<a id="guide-day-2-pattern-a"></a>
+### 2. Day-2 Pattern A: Provision Multibranch & Org Discovery Scanner
+Trigger the Pattern A Seed Job to scan the GitHub organization for repositories with local `Jenkinsfile`s:
+```bash
+# Trigger Seed_Job_Pattern_A via Jenkins CLI or UI
+# Access: http://localhost:8080/job/Seed_Job_Pattern_A/build
+# Result: Discovers all branches/PRs in nubenetes organization and generates multibranch jobs under 'pattern-a-apps/'
 ```
 
 <a id="guide-day-2-register"></a>
-### 2. Day-2: Register a New Application (Simulating Backstage)
-Simulate the Backstage Scaffolder registering a new microservice:
+### 3. Day-2 Pattern B: Register a New Application (Simulating Backstage)
+Simulate the Backstage Scaffolder registering a new microservice into `inventories/dev.yaml`:
 ```bash
 # Register a new microservice in dev.yaml
 ./bin/register-app.sh \
@@ -346,7 +444,7 @@ Simulate the Backstage Scaffolder registering a new microservice:
 ```
 
 <a id="guide-day-3-decommission"></a>
-### 3. Day-3: Decommission an Application
+### 4. Day-3 Pattern B: Decommission an Application
 Cleanly retire an application and trigger automatic job deletion in Jenkins:
 ```bash
 # Remove application from dev.yaml inventory
