@@ -1,6 +1,6 @@
 # ==============================================================================
 # Backstage Tech Insights & Production Readiness Scorecards
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: backstage/tech-insights/scorecards.yaml
 # ==============================================================================
 # Defines data sources, automated facts, and scorecard checks to evaluate

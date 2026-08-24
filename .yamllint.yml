@@ -1,6 +1,6 @@
 # ==============================================================================
 # Yamllint Configuration for Enterprise CI/CD Inventories & Configs
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: .yamllint.yml
 # ==============================================================================
 ---

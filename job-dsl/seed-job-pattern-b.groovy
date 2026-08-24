@@ -1,6 +1,6 @@
 // ==============================================================================
 // Pattern B (Advanced): Git-Backed Centralized Seed Job Engine
-// Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+// Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 // File: job-dsl/seed-job-pattern-b.groovy
 // ==============================================================================
 // Description:

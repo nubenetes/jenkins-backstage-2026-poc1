@@ -1,6 +1,6 @@
 # ==============================================================================
 # Backstage Scaffolder Template: Pattern A (Application with Local Jenkinsfile)
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: backstage/templates/pattern-a-app-template.yaml
 # ==============================================================================
 apiVersion: scaffolder.backstage.io/v1beta3

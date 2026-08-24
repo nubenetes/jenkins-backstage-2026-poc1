@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Dry-Run Simulation Script: Job DSL Seed Job Generator (Pattern B)
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: bin/simulate-seed.sh
 # ==============================================================================
 # Usage: ./bin/simulate-seed.sh [inventories_dir]

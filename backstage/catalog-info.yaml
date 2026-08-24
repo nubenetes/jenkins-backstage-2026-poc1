@@ -1,6 +1,6 @@
 # ==============================================================================
 # Backstage Component Catalog Specification (Central Infrastructure Repo)
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: backstage/catalog-info.yaml
 # ==============================================================================
 apiVersion: backstage.io/v1alpha1
@@ -10,7 +10,7 @@ metadata:
   title: Jenkins & Backstage GitOps Engine
   description: Central GitOps inventory and Job DSL repository provisioning multi-environment microservice CI/CD pipelines.
   annotations:
-    github.com/project-slug: nubenetes/jenkins-backstage-2026-poc1
+    github.com/project-slug: nubenetes/jenkins-backstage-gitops-patterns
     jenkins.io/job-full-name: Seed_Job_Pattern_B
     backstage.io/techdocs-ref: dir:.
   tags:
@@ -22,7 +22,7 @@ metadata:
     - openshift
     - kubernetes
   links:
-    - url: https://github.com/nubenetes/jenkins-backstage-2026-poc1
+    - url: https://github.com/nubenetes/jenkins-backstage-gitops-patterns
       title: GitHub Repository
       icon: github
     - url: https://jenkins.apps.openshift.nubenetes.io/job/Seed_Job_Pattern_B/

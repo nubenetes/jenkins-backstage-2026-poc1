@@ -8,7 +8,7 @@
 <!-- ======================================================================= -->
 <p align="center">
   <!-- Core Architecture & GitOps -->
-  <a href="https://github.com/nubenetes/jenkins-backstage-2026-poc1"><img src="https://img.shields.io/badge/Architecture-GitOps%20%7C%20JCasC%20%7C%20Job%20DSL-brightgreen.svg?style=for-the-badge&logo=git&logoColor=white" alt="Architecture" /></a>
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns"><img src="https://img.shields.io/badge/Architecture-GitOps%20%7C%20JCasC%20%7C%20Job%20DSL-brightgreen.svg?style=for-the-badge&logo=git&logoColor=white" alt="Architecture" /></a>
   <a href="https://jenkins.io"><img src="https://img.shields.io/badge/Jenkins-LTS%20JDK21-D24939.svg?style=for-the-badge&logo=jenkins&logoColor=white" alt="Jenkins" /></a>
   <a href="https://backstage.io"><img src="https://img.shields.io/badge/Backstage-Scaffolder%20v1beta3-9BF0E1.svg?style=for-the-badge&logo=spotify&logoColor=black" alt="Backstage" /></a>
   <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift"><img src="https://img.shields.io/badge/OpenShift-4.14%2B-EE0000.svg?style=for-the-badge&logo=redhatopenshift&logoColor=white" alt="OpenShift" /></a>
@@ -29,11 +29,11 @@
 
 <p align="center">
   <!-- Repository Statistics & Standards -->
-  <a href="https://github.com/nubenetes/jenkins-backstage-2026-poc1/stargazers"><img src="https://img.shields.io/github/stars/nubenetes/jenkins-backstage-2026-poc1?style=social" alt="GitHub Stars" /></a>
-  <a href="https://github.com/nubenetes/jenkins-backstage-2026-poc1/network/members"><img src="https://img.shields.io/github/forks/nubenetes/jenkins-backstage-2026-poc1?style=social" alt="GitHub Forks" /></a>
-  <a href="https://github.com/nubenetes/jenkins-backstage-2026-poc1/issues"><img src="https://img.shields.io/github/issues/nubenetes/jenkins-backstage-2026-poc1?style=flat-square&color=blue" alt="Issues" /></a>
-  <a href="https://github.com/nubenetes/jenkins-backstage-2026-poc1/pulls"><img src="https://img.shields.io/github/issues-pr/nubenetes/jenkins-backstage-2026-poc1?style=flat-square&color=brightgreen" alt="Pull Requests" /></a>
-  <img src="https://img.shields.io/github/last-commit/nubenetes/jenkins-backstage-2026-poc1?style=flat-square&color=blueviolet" alt="Last Commit" />
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/stargazers"><img src="https://img.shields.io/github/stars/nubenetes/jenkins-backstage-gitops-patterns?style=social" alt="GitHub Stars" /></a>
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/network/members"><img src="https://img.shields.io/github/forks/nubenetes/jenkins-backstage-gitops-patterns?style=social" alt="GitHub Forks" /></a>
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/issues"><img src="https://img.shields.io/github/issues/nubenetes/jenkins-backstage-gitops-patterns?style=flat-square&color=blue" alt="Issues" /></a>
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/pulls"><img src="https://img.shields.io/github/issues-pr/nubenetes/jenkins-backstage-gitops-patterns?style=flat-square&color=brightgreen" alt="Pull Requests" /></a>
+  <img src="https://img.shields.io/github/last-commit/nubenetes/jenkins-backstage-gitops-patterns?style=flat-square&color=blueviolet" alt="Last Commit" />
   <img src="https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg?style=flat-square" alt="Conventional Commits" />
 </p>
 

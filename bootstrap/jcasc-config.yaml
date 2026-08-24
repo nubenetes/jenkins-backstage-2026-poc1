@@ -1,6 +1,6 @@
 # ==============================================================================
 # Jenkins Configuration as Code (JCasC) - Bootstrap Specification
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: bootstrap/jcasc-config.yaml
 # ==============================================================================
 # This configuration demonstrates the bootstrap definition used by JCasC to
@@ -127,7 +127,7 @@ jobs:
             scm {
               git {
                 remote {
-                  url('https://github.com/nubenetes/jenkins-backstage-2026-poc1.git')
+                  url('https://github.com/nubenetes/jenkins-backstage-gitops-patterns.git')
                   credentials('git-credentials-id')
                 }
                 branch('*/main')
@@ -147,7 +147,7 @@ jobs:
         scm {
           git {
             remote {
-              url('https://github.com/nubenetes/jenkins-backstage-2026-poc1.git')
+              url('https://github.com/nubenetes/jenkins-backstage-gitops-patterns.git')
               credentials('git-credentials-id')
             }
             branch('*/main')

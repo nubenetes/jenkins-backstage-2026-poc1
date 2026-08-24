@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Simulation Script: Decommission an Application from Pattern B Inventories
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: bin/decommission.sh
 # ==============================================================================
 set -euo pipefail

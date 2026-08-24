@@ -1,6 +1,6 @@
 # ==============================================================================
 # Backstage Scaffolder Template: Pattern B (Zero-Jenkinsfile + GitOps Inventory PR)
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: backstage/templates/pattern-b-app-template.yaml
 # ==============================================================================
 apiVersion: scaffolder.backstage.io/v1beta3
@@ -111,7 +111,7 @@ spec:
       name: Fetch Centralized Jenkins GitOps Control Repository
       action: fetch:plain
       input:
-        url: https://github.com/nubenetes/jenkins-backstage-2026-poc1.git
+        url: https://github.com/nubenetes/jenkins-backstage-gitops-patterns.git
         targetPath: ./central-config-workspace
 
     # 4. Append Application Metadata to inventories/dev.yaml
@@ -137,7 +137,7 @@ spec:
       name: Submit GitOps Pull Request to Centralized CI/CD Config
       action: publish:github:pull-request
       input:
-        repoUrl: github.com?repo=jenkins-backstage-2026-poc1&owner=nubenetes
+        repoUrl: github.com?repo=jenkins-backstage-gitops-patterns&owner=nubenetes
         branchName: register-${{ parameters.component_id }}
         title: "feat(gitops): Register ${{ parameters.component_id }} in dev inventory"
         description: |

@@ -1,6 +1,6 @@
 // ==============================================================================
 // Shared Declarative Pipeline Template for JHipster Java Microservices
-// Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+// Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 // File: jenkins-templates/SharedJenkinsfile
 // ==============================================================================
 // Injected directly into Jenkins jobs by Pattern B Seed Job (Job DSL).

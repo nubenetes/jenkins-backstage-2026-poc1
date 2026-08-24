@@ -1,6 +1,6 @@
 // ==============================================================================
 // Pattern A: Reactive/Automated Branch Discovery (Organization Folder & Multibranch)
-// Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+// Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 // File: job-dsl/seed-job-pattern-a.groovy
 // ==============================================================================
 // Description:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Simulation Script: Register a New Application in Pattern B Inventories
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: bin/register-app.sh
 # ==============================================================================
 set -euo pipefail

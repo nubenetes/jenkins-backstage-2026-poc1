@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Bootstrap Script: Deploy Jenkins with JCasC and Pattern B Seed Job
-# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Repository: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # File: bin/bootstrap.sh
 # ==============================================================================
 set -euo pipefail

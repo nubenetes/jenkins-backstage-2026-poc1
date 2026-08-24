@@ -1,6 +1,6 @@
 # ==============================================================================
 # Jenkins Wrapper Helm Values (Production-Grade GitOps Pattern B)
-# Reference: github.com/nubenetes/jenkins-backstage-2026-poc1
+# Reference: github.com/nubenetes/jenkins-backstage-gitops-patterns
 # ==============================================================================
 
 jenkins:
@@ -132,7 +132,7 @@ jenkins:
                       scm {
                         git {
                           remote {
-                            url('https://github.com/nubenetes/jenkins-backstage-2026-poc1.git')
+                            url('https://github.com/nubenetes/jenkins-backstage-gitops-patterns.git')
                             credentials('git-credentials-id')
                           }
                           branch('*/main')
