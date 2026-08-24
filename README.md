@@ -39,6 +39,7 @@
 
 ---
 
+<a id="about-this-repository"></a>
 ## 📌 About This Repository
 
 > **One-liner Description (GitHub About):**
@@ -50,27 +51,33 @@
 ---
 
 ## 📑 Table of Contents
-1. [Executive Summary](#-executive-summary)
-2. [Architectural Comparison: Pattern A vs. Pattern B](#-architectural-comparison-pattern-a-vs-pattern-b)
-3. [System Architecture & Lifecycle Flows (Mermaid)](#-system-architecture--lifecycle-flows)
-   - [Flow 1: Day-1 Bootstrap (JCasC & Seed Job Initialization)](#flow-1-day-1-bootstrap-jcasc--seed-job-initialization)
-   - [Flow 2: Day-2 Operations (Backstage $\rightarrow$ YAML Inventory $\rightarrow$ Pipeline Injection)](#flow-2-day-2-operations-backstage--yaml-inventory--pipeline-injection)
-   - [Flow 3: Decommissioning & Automated Garbage Collection](#flow-3-decommissioning--automated-garbage-collection)
-4. [Deep Dive: Why Direct Pipeline Injection Over Shared Libraries?](#-deep-dive-why-direct-pipeline-injection-over-shared-libraries)
-5. [Repository Structure](#-repository-structure)
-6. [Component Breakdown](#-component-breakdown)
-   - [1. Helm Chart Wrapper (`charts/jenkins-wrapper`)](#1-helm-chart-wrapper-chartsjenkins-wrapper)
-   - [2. JCasC Definition (`bootstrap/jcasc-config.yaml`)](#2-jcasc-definition-bootstrapjcasc-configyaml)
-   - [3. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)](#3-job-dsl-pattern-b-engine-job-dslseed-job-pattern-bgroovy)
-   - [4. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)](#4-shared-declarative-jenkinsfile-jenkins-templatessharedjenkinsfile)
-   - [5. Environment Inventories (`inventories/*.yaml`)](#5-environment-inventories-inventoriesyaml)
-   - [6. Backstage Scaffolder Templates (`backstage/templates`)](#6-backstage-scaffolder-templates-backstagetemplates)
-   - [7. Sample JHipster Microservice (`samples/jhipster-microservice`)](#7-sample-jhipster-microservice-samplesjhipster-microservice)
-7. [Enterprise OpenShift & Kubernetes Considerations](#-enterprise-openshift--kubernetes-considerations)
-8. [Step-by-Step Operations Guide](#-step-by-step-operations-guide)
+1. [About This Repository](#about-this-repository)
+2. [Executive Summary](#executive-summary)
+3. [Architectural Comparison: Pattern A vs. Pattern B](#architectural-comparison)
+4. [System Architecture & Lifecycle Flows (Mermaid)](#system-architecture-flows)
+   - [Flow 1: Day-1 Bootstrap (JCasC & Seed Job Initialization)](#flow-1-bootstrap)
+   - [Flow 2: Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)](#flow-2-operations)
+   - [Flow 3: Decommissioning & Automated Garbage Collection](#flow-3-decommissioning)
+5. [Deep Dive: Why Direct Pipeline Injection Over Shared Libraries?](#deep-dive-injection)
+6. [Repository Structure](#repository-structure)
+7. [Component Breakdown](#component-breakdown)
+   - [1. Helm Chart Wrapper (`charts/jenkins-wrapper`)](#component-helm-wrapper)
+   - [2. JCasC Definition (`bootstrap/jcasc-config.yaml`)](#component-jcasc-bootstrap)
+   - [3. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)](#component-job-dsl-engine)
+   - [4. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)](#component-shared-jenkinsfile)
+   - [5. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
+   - [6. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
+   - [7. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
+8. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
+9. [Step-by-Step Operations Guide](#step-by-step-guide)
+   - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
+   - [2. Day-2: Register a New Application (Simulating Backstage)](#guide-day-2-register)
+   - [3. Day-3: Decommission an Application](#guide-day-3-decommission)
+10. [License](#license)
 
 ---
 
+<a id="executive-summary"></a>
 ## 🎯 Executive Summary
 
 When integrating developer self-service portals (**Spotify Backstage**) with continuous integration engines (**Jenkins**) on modern Kubernetes and Red Hat OpenShift clusters, platform teams face a critical architectural decision: **How should application CI/CD pipelines be created, maintained, standardized, and decommissioned?**
@@ -81,6 +88,7 @@ This repository demonstrates and contrasts two major enterprise patterns:
 
 ---
 
+<a id="architectural-comparison"></a>
 ## ⚖️ Architectural Comparison: Pattern A vs. Pattern B
 
 | Evaluation Dimension | Pattern A: Reactive Branch Discovery (Multibranch) | Pattern B: Centralized Seed Job (Inventory-Driven) |
@@ -95,8 +103,10 @@ This repository demonstrates and contrasts two major enterprise patterns:
 
 ---
 
+<a id="system-architecture-flows"></a>
 ## 📊 System Architecture & Lifecycle Flows
 
+<a id="flow-1-bootstrap"></a>
 ### Flow 1: Day-1 Bootstrap (JCasC & Seed Job Initialization)
 This flow illustrates how Jenkins is provisioned in OpenShift/Kubernetes with zero manual UI interaction using Helm and Jenkins Configuration as Code (JCasC).
 
@@ -122,7 +132,8 @@ sequenceDiagram
 
 ---
 
-### Flow 2: Day-2 Operations (Backstage $\rightarrow$ YAML Inventory $\rightarrow$ Pipeline Injection)
+<a id="flow-2-operations"></a>
+### Flow 2: Day-2 Operations (Backstage → YAML Inventory → Pipeline Injection)
 This flow demonstrates a developer scaffolding a new JHipster microservice via Backstage, which registers the service in GitOps inventories and automatically yields an active, replayable Jenkins pipeline.
 
 ```mermaid
@@ -150,6 +161,7 @@ sequenceDiagram
 
 ---
 
+<a id="flow-3-decommissioning"></a>
 ### Flow 3: Decommissioning & Automated Garbage Collection
 This flow shows how simple deletion of metadata in the Git inventory safely purges Jenkins pipelines and folders without manual operator intervention.
 
@@ -171,6 +183,7 @@ sequenceDiagram
 
 ---
 
+<a id="deep-dive-injection"></a>
 ## 🔍 Deep Dive: Why Direct Pipeline Injection Over Shared Libraries?
 
 In standard enterprise Jenkins setups, teams frequently use **Jenkins Shared Libraries (JSL)** (e.g. `@Library('my-shared-lib') _`). While JSL has historically been popular, it introduces severe architectural friction at scale:
@@ -189,6 +202,7 @@ In standard enterprise Jenkins setups, teams frequently use **Jenkins Shared Lib
 
 ---
 
+<a id="repository-structure"></a>
 ## 📂 Repository Structure
 
 ```text
@@ -225,20 +239,24 @@ In standard enterprise Jenkins setups, teams frequently use **Jenkins Shared Lib
 
 ---
 
+<a id="component-breakdown"></a>
 ## 🧩 Component Breakdown
 
+<a id="component-helm-wrapper"></a>
 ### 1. Helm Chart Wrapper (`charts/jenkins-wrapper`)
 Wraps the official Jenkins Helm Chart (`jenkins/jenkins`) and packages the required Kubernetes configurations:
 * **Pre-installed Plugins**: `configuration-as-code`, `job-dsl`, `kubernetes`, `workflow-aggregator`, `git`, `sonar`, `pipeline-stage-view`.
 * **JCasC Integration**: Mounts the Job DSL bootstrap scripts directly into the controller container.
 * **Kubernetes Pod Cloud**: Pre-configures the dynamic Pod Cloud for agent scheduling.
 
+<a id="component-jcasc-bootstrap"></a>
 ### 2. JCasC Definition (`bootstrap/jcasc-config.yaml`)
 Configures the Jenkins controller as code:
 * Sets up security realms and authorization matrices.
 * Defines the Kubernetes cloud provider with container agent specifications (`maven`, `kaniko`, `oc-cli`).
 * Provisions the initial bootstrap **Seed Job** that clones this repository and executes `job-dsl/seed-job-pattern-b.groovy`.
 
+<a id="component-job-dsl-engine"></a>
 ### 3. Job DSL Pattern B Engine (`job-dsl/seed-job-pattern-b.groovy`)
 A Groovy script that:
 * Uses `groovy.yaml.YamlSlurper` to parse `inventories/dev.yaml`, `inventories/pre.yaml`, and `inventories/pro.yaml`.
@@ -248,6 +266,7 @@ A Groovy script that:
 * Dynamically maps YAML metadata (JVM limits, replicas, namespace, Git branch, SonarQube flags) into Jenkins job environment variables and parameters.
 * Configures `removedJobAction('DELETE')` and `removedViewAction('DELETE')` for zero-touch decommissioning.
 
+<a id="component-shared-jenkinsfile"></a>
 ### 4. Shared Declarative Jenkinsfile (`jenkins-templates/SharedJenkinsfile`)
 A declarative pipeline template for JHipster/Java microservices with:
 * **Dynamic Pod Agent**: Runs multi-container pods (`maven`, `sonar-scanner`, `kaniko`, `openshift-cli`).
@@ -257,6 +276,7 @@ A declarative pipeline template for JHipster/Java microservices with:
   * `Container Image Build`: Kaniko or OpenShift BuildConfigs (executes on `dev` or on release tags).
   * `Continuous Deployment`: GitOps sync / OpenShift deployment rollout to the target namespace.
 
+<a id="component-environment-inventories"></a>
 ### 5. Environment Inventories (`inventories/*.yaml`)
 Structured configuration matrices defining the desired state of all microservices per environment:
 ```yaml
@@ -276,15 +296,18 @@ applications:
     replicas: 2
 ```
 
+<a id="component-backstage-templates"></a>
 ### 6. Backstage Scaffolder Templates (`backstage/templates`)
 * **`pattern-a-app-template.yaml`**: The classic template. Generates an application repository containing a static `Jenkinsfile` inside the app root.
 * **`pattern-b-app-template.yaml`**: The GitOps inventory template. Clones the application boilerplate *without* a `Jenkinsfile`, then uses Backstage actions (`fetch:plain`, file append, and `publish:github:pull-request`) to submit a Pull Request to this configuration repository's `inventories/dev.yaml`.
 
+<a id="component-jhipster-microservice"></a>
 ### 7. Sample JHipster Microservice (`samples/jhipster-microservice`)
 A standard Java 21 / Spring Boot 3 JHipster microservice stub. Notice that **no `Jenkinsfile` exists in this folder**, proving complete isolation between developer business code and platform CI/CD pipelines.
 
 ---
 
+<a id="openshift-kubernetes-considerations"></a>
 ## 🛡️ Enterprise OpenShift & Kubernetes Considerations
 
 When running this architecture on Red Hat OpenShift:
@@ -298,8 +321,10 @@ When running this architecture on Red Hat OpenShift:
 
 ---
 
+<a id="step-by-step-guide"></a>
 ## 🚀 Step-by-Step Operations Guide
 
+<a id="guide-day-1-bootstrap"></a>
 ### 1. Day-1: Bootstrap Jenkins Controller
 Deploy Jenkins with the Helm wrapper and bootstrap the Seed Job:
 ```bash
@@ -307,6 +332,7 @@ Deploy Jenkins with the Helm wrapper and bootstrap the Seed Job:
 ./bin/bootstrap.sh --namespace jenkins-ci --environment dev
 ```
 
+<a id="guide-day-2-register"></a>
 ### 2. Day-2: Register a New Application (Simulating Backstage)
 Simulate the Backstage Scaffolder registering a new microservice:
 ```bash
@@ -319,6 +345,7 @@ Simulate the Backstage Scaffolder registering a new microservice:
   --environment dev
 ```
 
+<a id="guide-day-3-decommission"></a>
 ### 3. Day-3: Decommission an Application
 Cleanly retire an application and trigger automatic job deletion in Jenkins:
 ```bash
@@ -330,5 +357,7 @@ Cleanly retire an application and trigger automatic job deletion in Jenkins:
 
 ---
 
+<a id="license"></a>
 ## 📜 License
 This project is licensed under the Apache License 2.0. Reference implementation provided by **nubenetes**.
+
