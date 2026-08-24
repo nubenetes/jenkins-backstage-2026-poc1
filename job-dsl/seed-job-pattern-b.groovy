@@ -86,11 +86,24 @@ environments.each { envConfig ->
         boolean sonarEnabled = app.containsKey('sonar_enabled') ? app.sonar_enabled : true
         String dockerRegistry = inventoryData.registry ?: "image-registry.openshift-image-registry.svc:5000"
 
-        // Ensure team subfolder exists inside the environment folder
+        // Ensure team subfolder exists inside the environment folder with scoped RBAC
         String teamFolderPath = "${envName}/${teamName}"
         folder(teamFolderPath) {
             displayName("👥 Team: ${teamName}")
             description("Managed pipelines owned by team '${teamName}' in ${envName.toUpperCase()}.")
+            authorization {
+                // Platform Admin Full Governance
+                permission('hudson.model.Item.Read', 'group:platform-engineering')
+                permission('hudson.model.Item.Build', 'group:platform-engineering')
+                permission('hudson.model.Item.Cancel', 'group:platform-engineering')
+                permission('hudson.model.Item.Configure', 'group:platform-engineering')
+
+                // Owning Team Scoped Access (Zero Cross-Team Interference)
+                permission('hudson.model.Item.Read', "group:team-${teamName}")
+                permission('hudson.model.Item.Build', "group:team-${teamName}")
+                permission('hudson.model.Item.Cancel', "group:team-${teamName}")
+                permission('hudson.model.Run.Replay', "group:team-${teamName}")
+            }
         }
 
         // Full job path: e.g. "dev/e-commerce/store-gateway"

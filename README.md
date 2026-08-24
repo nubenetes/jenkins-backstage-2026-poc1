@@ -70,8 +70,15 @@
    - [The Backstage Scaffolder GitOps Workflow in Pattern B](#pattern-b-backstage-workflow)
    - [Multi-Environment Promotion Matrix (dev → pre → pro)](#pattern-b-promotion-matrix)
    - [Automated Zero-Touch Decommissioning & Garbage Collection](#pattern-b-decommissioning-mechanics)
-7. [Repository Structure](#repository-structure)
-8. [Component Breakdown](#component-breakdown)
+7. [Enterprise Platform Engineering Extensions](#enterprise-extensions)
+   - [1. Software Supply Chain Security (SLSA, Syft SBOM, Cosign, Gitleaks)](#ext-supply-chain-security)
+   - [2. Backstage Portal & Tech Insights Scorecards](#ext-backstage-devex)
+   - [3. CI for CI: Automated Validation & Dry-Run Simulation](#ext-ci-for-ci)
+   - [4. Zero-Trust Secrets & Team Folder RBAC](#ext-zero-trust-rbac)
+   - [5. Observability: OpenTelemetry & Grafana Dashboards](#ext-observability)
+   - [6. Hybrid GitOps: ArgoCD & OpenShift GitOps Bridge](#ext-argocd-bridge)
+8. [Repository Structure](#repository-structure)
+9. [Component Breakdown](#component-breakdown)
    - [1. Helm Chart Wrapper (`charts/jenkins-wrapper`)](#component-helm-wrapper)
    - [2. JCasC Definition (`bootstrap/jcasc-config.yaml`)](#component-jcasc-bootstrap)
    - [3. Job DSL Pattern A Engine (`job-dsl/seed-job-pattern-a.groovy`)](#component-job-dsl-pattern-a)
@@ -80,13 +87,13 @@
    - [6. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
    - [7. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
    - [8. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
-9. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
-10. [Step-by-Step Operations Guide](#step-by-step-guide)
-   - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
-   - [2. Day-2 Pattern A: Provision Multibranch Scanner](#guide-day-2-pattern-a)
-   - [3. Day-2 Pattern B: Register a New Application](#guide-day-2-register)
-   - [4. Day-3 Pattern B: Decommission an Application](#guide-day-3-decommission)
-11. [License](#license)
+10. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
+11. [Step-by-Step Operations Guide](#step-by-step-guide)
+    - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
+    - [2. Day-2 Pattern A: Provision Multibranch Scanner](#guide-day-2-pattern-a)
+    - [3. Day-2 Pattern B: Register a New Application](#guide-day-2-register)
+    - [4. Day-3 Pattern B: Decommission an Application](#guide-day-3-decommission)
+12. [License](#license)
 
 ---
 
@@ -405,7 +412,52 @@ In Pattern B, decommissioning is an automated GitOps operation:
 
 ---
 
+<a id="enterprise-extensions"></a>
+## 🛡️ Enterprise Platform Engineering Extensions
 
+<a id="ext-supply-chain-security"></a>
+### 1. Software Supply Chain Security (SLSA, Syft SBOM, Cosign, Gitleaks)
+Modern enterprise CI/CD requires comprehensive supply chain integrity:
+* **Pre-Build Secret Scanning (Gitleaks)**: The dynamic agent runs `zricethezav/gitleaks:latest` across the workspace before any compilation occurs, preventing credential leakages.
+* **SBOM Generation (Anchore Syft)**: During container packaging, Syft inspects application dependencies and generates a standard **CycloneDX JSON** Software Bill of Materials (`target/*.cdx.json`), which is archived as a permanent build artifact.
+* **Cryptographic Image Signing & Attestation (Sigstore Cosign)**: Kaniko container builds are signed keylessly via OpenShift OIDC ServiceAccount tokens, and the CycloneDX SBOM is cryptographically attached as an in-toto attestation.
+
+<a id="ext-backstage-devex"></a>
+### 2. Backstage Portal & Tech Insights Scorecards
+* **Live CI/CD Annotations**: Generated microservices embed standard Backstage annotations linking the developer portal entity view directly to Jenkins pipelines and SonarQube quality metrics:
+  ```yaml
+  metadata:
+    annotations:
+      jenkins.io/job-full-name: dev/e-commerce/store-gateway
+      sonarqube.org/project-key: store-gateway-dev
+      backstage.io/techdocs-ref: dir:.
+  ```
+* **Production Readiness Scorecards (`backstage/tech-insights/scorecards.yaml`)**: Automatically evaluates microservices against enterprise standards (inventory registration in `inventories/*.yaml`, SonarQube line coverage $\ge 80\%$, SBOM artifact generation, and Cosign signature verification).
+
+<a id="ext-ci-for-ci"></a>
+### 3. CI for CI: Automated Validation & Dry-Run Simulation
+To protect the central controller from broken configurations:
+* **GitHub Actions Workflow (`.github/workflows/ci.yml`)**: Automatically triggers on PRs modifying inventories, running `yamllint`, validating JCasC schema, and executing Job DSL dry-run simulations.
+* **Dry-Run CLI Simulation (`bin/simulate-seed.sh`)**: Platform engineers can simulate the exact hierarchy of Jenkins folders, parameters, and pipelines that Job DSL will generate:
+  ```bash
+  ./bin/simulate-seed.sh
+  ```
+
+<a id="ext-zero-trust-rbac"></a>
+### 4. Zero-Trust Secrets & Team Folder RBAC
+* **Matrix-Based Authorization Strategy (`projectMatrix`)**: Configured via JCasC (`bootstrap/jcasc-config.yaml`) to enforce least-privilege access.
+* **Team-Scoped Folder Permissions**: Pattern B Seed Job dynamically assigns scoped permissions (`Job/Read`, `Job/Build`, `Job/Replay`) to owning team groups (`group:team-<teamName>`), preventing unauthorized builds across teams while granting platform engineering global governance.
+
+<a id="ext-observability"></a>
+### 5. Observability: OpenTelemetry & Grafana Dashboards
+* **OpenTelemetry Distributed Tracing**: Enabled via `opentelemetry:2.17.0` plugin in Helm values, exporting pipeline stage durations and controller queue latency directly to OpenTelemetry collectors.
+* **Pre-built Grafana Dashboard (`dashboards/jenkins-gitops-metrics.json`)**: Tracks Seed Job duration, total active pipelines across environments, p95 agent startup latency, and success rates per engineering team.
+
+<a id="ext-argocd-bridge"></a>
+### 6. Hybrid GitOps: ArgoCD & OpenShift GitOps Bridge
+* **Automated Manifest Promotion**: In `jenkins-templates/SharedJenkinsfile`, an optional stage updates the image tag in an ArgoCD GitOps repository and issues an automated synchronization trigger (`argocd app sync`), seamlessly connecting Jenkins CI with ArgoCD CD.
+
+---
 
 <a id="repository-structure"></a>
 ## 📂 Repository Structure
@@ -413,31 +465,42 @@ In Pattern B, decommissioning is an automated GitOps operation:
 ```text
 .
 ├── README.md                          # Comprehensive documentation, comparison, and diagrams
+├── .github/
+│   └── workflows/
+│       └── ci.yml                     # GitHub Actions: Linting, validation & Job DSL simulation
+├── .yamllint.yml                      # Enterprise YAML linting rules
 ├── charts/
 │   └── jenkins-wrapper/               # Custom Helm Chart wrapper for Jenkins
 │       ├── Chart.yaml                 # Helm Chart metadata with Jenkins dependency
-│       └── values.yaml                # JCasC, plugins setup, and automated Seed Job configuration
+│       └── values.yaml                # JCasC, plugins, RBAC, and OpenTelemetry configuration
 ├── bootstrap/
-│   └── jcasc-config.yaml              # Standalone JCasC configuration showing raw Seed Job loading
+│   └── jcasc-config.yaml              # Standalone JCasC configuration with Matrix RBAC & OTel
 ├── job-dsl/
 │   ├── seed-job-pattern-a.groovy      # Job DSL for Pattern A (Organization folder / Branch scan)
-│   └── seed-job-pattern-b.groovy      # Job DSL for Pattern B (YAML inventory iterator + readFileFromWorkspace)
+│   └── seed-job-pattern-b.groovy      # Job DSL for Pattern B (YAML inventory iterator + CPS injection + RBAC)
 ├── jenkins-templates/
-│   └── SharedJenkinsfile              # Shared Declarative Jenkinsfile template (injected via Job DSL)
+│   └── SharedJenkinsfile              # Shared Declarative Pipeline (Gitleaks, Syft, Cosign, ArgoCD)
 ├── inventories/                       # Pattern B Multi-Environment Inventories
 │   ├── dev.yaml                       # Microservices list and parameters for Dev
 │   ├── pre.yaml                       # Microservices list and parameters for Pre-production
 │   └── pro.yaml                       # Microservices list and parameters for Production
 ├── backstage/
+│   ├── catalog-info.yaml              # Central infrastructure catalog entity
+│   ├── tech-insights/
+│   │   └── scorecards.yaml            # Backstage Production Readiness Scorecards
 │   └── templates/
+│       ├── catalog-info-template.yaml # Component catalog template for microservices
 │       ├── pattern-a-app-template.yaml # Backstage template: provisions app with local Jenkinsfile
 │       └── pattern-b-app-template.yaml # Backstage template: registers app in inventories/ (No Jenkinsfile)
+├── dashboards/
+│   └── jenkins-gitops-metrics.json    # Production-ready Grafana metrics dashboard
 ├── samples/
 │   └── jhipster-microservice/         # Minimal JHipster Java microservice stub (No Jenkinsfile in repo)
 │       ├── pom.xml                    # Spring Boot / Maven definition
 │       └── src/                       # Application code stub
-└── bin/                               # Simplified operational scripts (Day 1, Day 2, Decommission)
+└── bin/                               # Operational scripts (Day 1, Day 2, Simulation, Decommission)
     ├── bootstrap.sh                   # Unified script to spin up the local/OpenShift setup
+    ├── simulate-seed.sh               # Dry-run CLI tool: parses YAMLs and previews Job DSL output
     ├── register-app.sh                # Simulation script: registers a new app in Pattern B inventories
     └── decommission.sh                # Simulation script: removes an app and triggers cleanup
 ```

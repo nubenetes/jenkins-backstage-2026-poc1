@@ -1,0 +1,80 @@
+# ==============================================================================
+# Backstage Tech Insights & Production Readiness Scorecards
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: backstage/tech-insights/scorecards.yaml
+# ==============================================================================
+# Defines data sources, automated facts, and scorecard checks to evaluate
+# microservice production readiness against enterprise CI/CD standards.
+# ==============================================================================
+
+apiVersion: tech-insights.backstage.io/v1alpha1
+kind: Scorecard
+metadata:
+  name: enterprise-ci-cd-readiness
+  title: Enterprise CI/CD & Security Readiness Scorecard
+  description: Validates adherence to Pattern B GitOps inventories, security gates, and SBOM compliance.
+spec:
+  checks:
+    # 1. Inventory Registration Check
+    - id: pattern-b-inventory-registration
+      type: json-rules-engine
+      name: GitOps Inventory Registration
+      description: Verifies that the microservice is registered in central inventories/dev.yaml.
+      factIds:
+        - catalog-metadata-fact
+      rule:
+        conditions:
+          all:
+            - fact: annotations
+              path: $.jenkins.io/job-full-name
+              operator: matches
+              value: "^(dev|pre|pro)/.+/.+$"
+
+    # 2. SonarQube Quality Gate Check
+    - id: sonarqube-quality-gate-pass
+      type: sonarqube-fact-checker
+      name: SonarQube Quality Gate Status
+      description: Requires that SonarQube coverage is >= 80% with zero critical vulnerabilities.
+      factIds:
+        - sonarqube-metrics-fact
+      rule:
+        conditions:
+          all:
+            - fact: qualityGateStatus
+              operator: equal
+              value: "OK"
+            - fact: lineCoverage
+              operator: greaterThanInclusive
+              value: 80
+
+    # 3. Supply Chain Security Check (SBOM & Cosign)
+    - id: supply-chain-sbom-cosign-check
+      type: pipeline-artifact-checker
+      name: Software Supply Chain Compliance (SLSA)
+      description: Validates that CycloneDX SBOM (*.cdx.json) and Cosign signature exist for the build.
+      factIds:
+        - jenkins-artifacts-fact
+      rule:
+        conditions:
+          all:
+            - fact: hasSbomArtifact
+              operator: equal
+              value: true
+            - fact: isCosignSigned
+              operator: equal
+              value: true
+
+    # 4. TechDocs Documentation Check
+    - id: techdocs-configured
+      type: json-rules-engine
+      name: Technical Documentation (TechDocs)
+      description: Verifies that markdown architecture documentation is published via TechDocs.
+      factIds:
+        - catalog-metadata-fact
+      rule:
+        conditions:
+          all:
+            - fact: annotations
+              path: $.backstage.io/techdocs-ref
+              operator: notEqual
+              value: null

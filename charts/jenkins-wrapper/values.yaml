@@ -22,7 +22,7 @@ jenkins:
 
     javaOpts: "-Djenkins.install.runSetupWizard=false -Dorg.apache.commons.jelly.tags.core.expr.InstantExpr=false -Djava.awt.headless=true"
 
-    # Pre-installed Plugins required for JCasC, Job DSL, Kubernetes agents, and GitOps
+    # Pre-installed Plugins required for JCasC, Job DSL, Kubernetes agents, RBAC, and Observability
     installPlugins:
       - "configuration-as-code:1775.v810dc950b_514"
       - "job-dsl:1.89"
@@ -36,6 +36,8 @@ jenkins:
       - "credentials-binding:687.v6196d06e39fc"
       - "timestamper:1.26"
       - "pipeline-utility-steps:2.16.0"
+      - "matrix-auth:3.2.2"
+      - "opentelemetry:2.17.0"
 
     # Jenkins Configuration as Code (JCasC) definitions
     JCasC:
@@ -54,10 +56,20 @@ jenkins:
                   - id: "admin"
                     password: "${JENKINS_ADMIN_PASSWORD:-admin123456}"
             authorizationStrategy:
-              loggedInUsersCanDoAnything:
-                allowAnonymousRead: false
+              projectMatrix:
+                permissions:
+                  - "Overall/Administer:admin"
+                  - "Overall/Administer:group:platform-engineering"
+                  - "Overall/Read:authenticated"
+                  - "View/Read:authenticated"
+                  - "Item/Read:authenticated"
             remotingSecurity:
               enabled: true
+        observability-config: |
+          unclassified:
+            openTelemetry:
+              endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector.monitoring.svc:4317}"
+              exportOtelConfigurationAsEnvironmentVariables: true
         kubernetes-agents: |
           jenkins:
             clouds:

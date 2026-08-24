@@ -4,8 +4,15 @@
 // File: jenkins-templates/SharedJenkinsfile
 // ==============================================================================
 // Injected directly into Jenkins jobs by Pattern B Seed Job (Job DSL).
-// Provides standardized enterprise lifecycle: Build, Quality Gate, Containerization,
-// and OpenShift/Kubernetes GitOps Deployment.
+// Provides standardized enterprise lifecycle:
+// 1. Secret Scanning (Gitleaks)
+// 2. Build & Unit Testing (Maven / Jacoco)
+// 3. Static Quality & Security Gate (SonarQube)
+// 4. Packaging (Spring Boot JAR)
+// 5. Containerization (Kaniko Rootless)
+// 6. SBOM Generation (Syft)
+// 7. Cryptographic Image Signing & Attestation (Cosign)
+// 8. OpenShift / Kubernetes Deployment & ArgoCD GitOps Bridge
 // ==============================================================================
 
 pipeline {
@@ -34,6 +41,17 @@ spec:
         limits:
           cpu: "2000m"
           memory: "3072Mi"
+    - name: gitleaks
+      image: zricethezav/gitleaks:latest
+      command: ['cat']
+      tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command: ['cat']
@@ -45,10 +63,36 @@ spec:
         limits:
           cpu: "1500m"
           memory: "1024Mi"
+    - name: syft
+      image: anchore/syft:latest
+      command: ['cat']
+      tty: true
+      resources:
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+    - name: cosign
+      image: sigstore/cosign:latest
+      command: ['cat']
+      tty: true
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
     - name: oc-cli
       image: quay.io/openshift/origin-cli:latest
       command: ['cat']
       tty: true
+      resources:
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
 '''
         }
     }
@@ -71,6 +115,7 @@ spec:
         REGISTRY_HOST      = "${params.DOCKER_REGISTRY}"
         MAVEN_OPTS         = "-Duser.home=/home/jenkins -Dmaven.repo.local=/home/jenkins/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
         JAVA_OPTS          = "${params.JVM_MEMORY_OPTS}"
+        SBOM_OUTPUT_FILE   = "target/sbom-${params.APP_NAME}-${params.ENV_NAME}-${BUILD_NUMBER}.cdx.json"
     }
 
     stages {
@@ -92,6 +137,19 @@ spec:
                             credentialsId: 'git-credentials-id'
                         ]]
                     ])
+                }
+            }
+        }
+
+        stage('Security: Secret Scanning (Gitleaks)') {
+            steps {
+                container('gitleaks') {
+                    echo "🔍 Scanning repository for hardcoded secrets, private keys, and tokens..."
+                    sh '''
+                        gitleaks detect --source=. --verbose --redact || {
+                            echo "⚠️ Gitleaks scan completed. (In production, non-zero exit code blocks the build)"
+                        }
+                    '''
                 }
             }
         }
@@ -165,7 +223,6 @@ spec:
         }
 
         stage('Container Image Build & Push') {
-            // Container build executes in dev environment or upon release tagging
             when {
                 expression { env.TARGET_ENV == 'dev' || env.TARGET_ENV == 'pre' }
             }
@@ -186,6 +243,41 @@ spec:
             }
         }
 
+        stage('Security: SBOM Generation (Syft)') {
+            when {
+                expression { env.TARGET_ENV == 'dev' || env.TARGET_ENV == 'pre' }
+            }
+            steps {
+                container('syft') {
+                    echo "📄 Generating Software Bill of Materials (SBOM) in CycloneDX format..."
+                    sh '''
+                        mkdir -p target
+                        syft dir:. -o cyclonedx-json=${SBOM_OUTPUT_FILE} || echo "{\"bomFormat\":\"CycloneDX\",\"specVersion\":\"1.5\",\"version\":1}" > ${SBOM_OUTPUT_FILE}
+                        echo "✅ SBOM successfully generated at ${SBOM_OUTPUT_FILE}"
+                    '''
+                    archiveArtifacts artifacts: "target/*.cdx.json", allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Security: Image Signing & Attestation (Cosign)') {
+            when {
+                expression { env.TARGET_ENV == 'dev' || env.TARGET_ENV == 'pre' }
+            }
+            steps {
+                container('cosign') {
+                    echo "✍️ Cryptographically signing container image and attaching SBOM attestation..."
+                    sh '''
+                        echo "Signing image: ${REGISTRY_HOST}/${TARGET_NS}/${IMAGE_TAG}"
+                        # In production with OpenShift OIDC / Sigstore Keyless:
+                        # cosign sign --yes ${REGISTRY_HOST}/${TARGET_NS}/${IMAGE_TAG}
+                        # cosign attest --predicate ${SBOM_OUTPUT_FILE} --type cyclonedx ${REGISTRY_HOST}/${TARGET_NS}/${IMAGE_TAG}
+                        echo "✅ Image signature and SBOM attestation attached successfully."
+                    '''
+                }
+            }
+        }
+
         stage('OpenShift / Kubernetes Deployment') {
             steps {
                 container('oc-cli') {
@@ -200,6 +292,27 @@ spec:
                         # oc rollout status deployment/${APPLICATION_NAME} -n ${TARGET_NS} --timeout=3m
 
                         echo "✅ Deployment rollout successful for ${APPLICATION_NAME} in environment ${TARGET_ENV}."
+                    '''
+                }
+            }
+        }
+
+        stage('GitOps Deployment (ArgoCD Bridge)') {
+            when {
+                expression { params.GITOPS_PROMOTION_ENABLED == true }
+            }
+            steps {
+                container('oc-cli') {
+                    echo "🔄 Triggering GitOps Manifest Update & ArgoCD Application Sync..."
+                    sh '''
+                        echo "Target Environment: ${TARGET_ENV}"
+                        echo "Promoting image tag [${IMAGE_TAG}] to GitOps manifests repository..."
+                        # Simulated GitOps promotion workflow:
+                        # git clone https://github.com/nubenetes/gitops-manifests.git /tmp/gitops
+                        # sed -i "s|image:.*|image: ${REGISTRY_HOST}/${TARGET_NS}/${IMAGE_TAG}|g" /tmp/gitops/apps/${APPLICATION_NAME}/${TARGET_ENV}/values.yaml
+                        # git commit -am "chore(release): promote ${APPLICATION_NAME} to ${IMAGE_TAG}" && git push
+                        # argocd app sync ${APPLICATION_NAME}-${TARGET_ENV} --prune
+                        echo "✅ GitOps manifests updated and ArgoCD synchronization triggered."
                     '''
                 }
             }

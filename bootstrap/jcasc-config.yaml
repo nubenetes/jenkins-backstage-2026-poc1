@@ -14,7 +14,7 @@ jenkins:
   mode: EXCLUSIVE
   scmCheckoutRetryCount: 3
 
-  # Security and Global Authorization
+  # Security and Global Authorization (Matrix-Based Security Model)
   securityRealm:
     local:
       allowsSignup: false
@@ -24,8 +24,13 @@ jenkins:
           description: "Default Platform Administrator"
 
   authorizationStrategy:
-    loggedInUsersCanDoAnything:
-      allowAnonymousRead: false
+    projectMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Administer:group:platform-engineering"
+        - "Overall/Read:authenticated"
+        - "View/Read:authenticated"
+        - "Item/Read:authenticated"
 
   # Cloud configuration for Kubernetes / OpenShift dynamic agent pods
   clouds:
@@ -85,6 +90,12 @@ unclassified:
   location:
     adminAddress: "platform-ci@nubenetes.io"
     url: "${JENKINS_URL:-http://localhost:8080/}"
+
+  # OpenTelemetry Distributed Tracing Configuration
+  openTelemetry:
+    endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector.monitoring.svc:4317}"
+    trustedCertificatesPem: ""
+    exportOtelConfigurationAsEnvironmentVariables: true
 
   # SonarQube Global Server Configuration
   sonarGlobalConfiguration:

@@ -1,0 +1,54 @@
+name: CI for CI - Inventory & Job DSL Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-inventories:
+    name: Lint YAML Inventories & JCasC
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Yamllint & Dependencies
+        run: pip install yamllint pyyaml
+
+      - name: Run Yamllint on Inventories & Configs
+        run: |
+          yamllint -c .yamllint.yml inventories/ bootstrap/ backstage/ charts/
+
+  simulate-job-dsl:
+    name: Simulate Job DSL Pipeline Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Job DSL Script & Inventories
+        run: |
+          chmod +x bin/simulate-seed.sh
+          ./bin/simulate-seed.sh
+
+  validate-pipeline-template:
+    name: Validate Declarative Pipeline Template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check SharedJenkinsfile Syntax
+        run: |
+          test -f jenkins-templates/SharedJenkinsfile
+          grep -q "pipeline {" jenkins-templates/SharedJenkinsfile
+          grep -q "agent {" jenkins-templates/SharedJenkinsfile
+          grep -q "stages {" jenkins-templates/SharedJenkinsfile
+          echo "✅ SharedJenkinsfile declarative structure validated."

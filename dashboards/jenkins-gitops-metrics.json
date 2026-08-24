@@ -1,0 +1,165 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "🌱 Job DSL & GitOps Sync Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "id": 2,
+      "title": "Seed Job Execution Duration",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "jenkins_job_duration_seconds{job=\"Seed_Job_Pattern_B\"}",
+          "legendFormat": "Seed Job Duration"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "id": 3,
+      "title": "Total Managed Microservice Pipelines",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(jenkins_job_last_build_timestamp{job=~\"(dev|pre|pro)/.*\"})",
+          "legendFormat": "Active Pipelines"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 90 },
+              { "color": "green", "value": 98 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "id": 4,
+      "title": "Enterprise Pipeline Success Rate",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "sum(rate(jenkins_build_success_total[1h])) / sum(rate(jenkins_build_total[1h])) * 100",
+          "legendFormat": "Success Rate (%)"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "id": 5,
+      "title": "Dynamic Agent Pod Startup Latency",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(jenkins_agent_provision_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 Agent Startup"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "id": 6,
+      "title": "⏱️ Pipeline Stage Durations & OpenTelemetry Insights",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisCenteredZero": false },
+          "unit": "s"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 7,
+      "title": "Stage Duration by Phase (Maven, Sonar, Kaniko, Syft, Cosign)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (stage) (rate(jenkins_pipeline_stage_duration_seconds_sum[5m]))",
+          "legendFormat": "{{stage}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 8,
+      "title": "Builds Executed per Team (dev.yaml / pre.yaml / pro.yaml)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (team) (increase(jenkins_build_total[1h]))",
+          "legendFormat": "Team: {{team}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["jenkins", "gitops", "backstage", "opentelemetry", "openshift"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"] },
+  "timezone": "browser",
+  "title": "Jenkins 2026 GitOps & Platform Metrics",
+  "uid": "jenkins-gitops-2026"
+}
