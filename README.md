@@ -228,13 +228,45 @@ sequenceDiagram
 ### Core Mechanics & Job DSL Engine
 In **Pattern A**, the continuous integration architecture relies on the **GitHub Branch Source Plugin** (or GitLab/Bitbucket equivalents) configured via `job-dsl/seed-job-pattern-a.groovy`.
 
-Key mechanisms include:
-1. **Organization Folders (`organizationFolder`)**: Automatically monitors an entire GitHub organization (e.g. `github.com/nubenetes`) for repositories containing a marker file (`Jenkinsfile` by default).
-2. **Branch & PR Discovery Traits**:
-   - `gitHubBranchDiscovery()`: Finds all matching active branches.
-   - `sourceRegexFilter('^(main|develop|feature/.*|release/.*)$')`: Filters out noise branches.
-   - `gitHubPullRequestDiscovery(strategyId: 1)`: Creates dynamic pull request pipelines merged with the target branch head revision to guarantee pre-merge testing.
-3. **Orphaned Item Strategy (`orphanedItemStrategy`)**: Automatically discards deleted branch jobs after a retention window (e.g., 7 days) to manage disk usage.
+The reactive discovery engine executes a 6-stage discovery and lifecycle flow:
+
+```mermaid
+flowchart TD
+    subgraph Phase1["🔍 Phase 1: SCM Scanning & Marker Detection"]
+        A["<b>1. Scan GitHub Organization</b><br/><code>organizationFolder('nubenetes')</code><br/><i>Periodic / Webhook SCM API Indexing</i>"]
+        B["<b>2. Detect Marker Jenkinsfile</b><br/><code>workflowMultiBranchProjectFactory</code><br/><i>Filters repos with local Jenkinsfile</i>"]
+    end
+
+    subgraph Phase2["🌿 Phase 2: Branch & PR Filter Evaluation"]
+        C["<b>3. Regex Branch Discovery</b><br/><code>sourceRegexFilter('^(main|develop|...)')</code><br/><i>Discovers active feature/release branches</i>"]
+        D["<b>4. Pull Request Discovery & Trust</b><br/><code>gitHubPullRequestDiscovery(strategyId: 1)</code><br/><i>Builds pre-merge PR head vs target</i>"]
+    end
+
+    subgraph Phase3["⚙️ Phase 3: Pipeline Instantiation & Retention"]
+        E["<b>5. Local Jenkinsfile Execution</b><br/><code>cpsScm { scriptPath('Jenkinsfile') }</code><br/><i>Executes pipeline code from app repo</i>"]
+        F["<b>6. Orphan Branch Discarder</b><br/><code>orphanedItemStrategy { discardOld(7d) }</code><br/><i>Prunes deleted branch jobs</i>"]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+
+    classDef default fill:#ffffff,stroke:#4a5568,stroke-width:1.5px;
+    classDef phaseBox fill:#f7fafc,stroke:#cbd5e0,stroke-width:1.5px;
+    classDef localStep fill:#fff5f5,stroke:#e53e3e,stroke-width:2px;
+    class Phase1,Phase2,Phase3 phaseBox;
+    class E localStep;
+```
+
+#### Step-by-Step Mechanics:
+1. **Organization Scanning**: `organizationFolder` periodically queries the GitHub API or reacts to push/repository webhooks across the organization.
+2. **Marker File Detection**: The factory inspects branch trees for the presence of a root `Jenkinsfile`. Repositories without a `Jenkinsfile` are ignored.
+3. **Branch Filtering**: `sourceRegexFilter` evaluates branch names against enterprise standards (e.g. `main`, `develop`, `feature/*`, `release/*`).
+4. **Pull Request Discovery**: PR discovery builds a temporary pre-merge commit against the target branch (`strategyId: 1`), running tests before merging.
+5. **Decentralized SCM Execution**: Pipeline instructions are fetched directly from the application repository's own `Jenkinsfile`.
+6. **Orphan Garbage Collection**: When a feature branch or PR is merged and deleted in Git, `orphanedItemStrategy` discards the corresponding Jenkins job after the retention window (e.g., 7 days).
 
 <a id="pattern-a-backstage"></a>
 ### The Backstage Scaffolder Flow in Pattern A
