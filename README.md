@@ -234,22 +234,22 @@ The reactive discovery engine executes a 6-stage discovery and lifecycle flow:
 flowchart LR
     subgraph P1["Phase 1: SCM Scanning"]
         direction TB
-        A1["1. Scan Organization<br/>organizationFolder('nubenetes')<br/>Periodic / Webhook Indexing"]
-        A2["2. Detect Marker File<br/>workflowMultiBranchFactory<br/>Identifies local Jenkinsfile"]
+        A1["1. Organization Scan<br/>Target: 'nubenetes'<br/>Periodic API Indexing"]
+        A2["2. Detect Marker File<br/>Branch Project Factory<br/>Checks for Jenkinsfile"]
         A1 --> A2
     end
 
-    subgraph P2["Phase 2: Branch & PR Filtering"]
+    subgraph P2["Phase 2: Branch Filtering"]
         direction TB
-        B1["3. Regex Branch Discovery<br/>sourceRegexFilter('main|develop|*')<br/>Discovers matching branches"]
-        B2["4. Pull Request Discovery<br/>gitHubPullRequestDiscovery<br/>Pre-merge testing vs target"]
+        B1["3. Regex Branch Filter<br/>main, develop, feature/*<br/>Matches active branches"]
+        B2["4. Pull Request Scan<br/>PR Discovery Trait<br/>Pre-merge target tests"]
         B1 --> B2
     end
 
-    subgraph P3["Phase 3: Pipeline & Retention"]
+    subgraph P3["Phase 3: Pipeline Execution"]
         direction TB
-        C1["5. Local Pipeline Execution<br/>cpsScm (local scriptPath)<br/>Runs pipeline from app repo"]
-        C2["6. Orphan Branch Discarder<br/>orphanedItemStrategy(7d)<br/>Prunes merged branch jobs"]
+        C1["5. Local Pipeline Run<br/>cpsScm from Git<br/>Runs app's Jenkinsfile"]
+        C2["6. Orphan Item Cleanup<br/>Prunes deleted branches<br/>Retention: 7 days"]
         C1 --> C2
     end
 
@@ -308,22 +308,22 @@ The Job DSL Seed Job (`job-dsl/seed-job-pattern-b.groovy`) executes a 6-stage pr
 flowchart LR
     subgraph P1["Phase 1: Input Ingestion"]
         direction TB
-        A1["1. Parse Inventories<br/>inventories/{dev,pre,pro}.yaml<br/>Parsed via YamlSlurper"]
-        A2["2. Ingest Shared Template<br/>Shared Jenkinsfile Template<br/>via readFileFromWorkspace"]
+        A1["1. Parse Inventories<br/>dev, pre, pro YAMLs<br/>via YamlSlurper"]
+        A2["2. Ingest Template<br/>SharedJenkinsfile<br/>readFileFromWorkspace"]
         A1 --> A2
     end
 
     subgraph P2["Phase 2: Hierarchy & Binding"]
         direction TB
-        B1["3. Folder Hierarchy<br/>env / team / app structure<br/>(dev/ecommerce/gateway)"]
-        B2["4. Dynamic Parameters<br/>Git URL, Branch, JVM Flags,<br/>CPU/Memory & Namespace"]
+        B1["3. Folder Hierarchy<br/>env / team / app<br/>dev/ecommerce/app"]
+        B2["4. Parameter Binding<br/>Git URL, Branch, JVM<br/>CPU/RAM & Namespace"]
         B1 --> B2
     end
 
-    subgraph P3["Phase 3: Injection & Lifecycle"]
+    subgraph P3["Phase 3: Injection & Cleanup"]
         direction TB
-        C1["5. Direct Script Injection<br/>script(SharedJenkinsfile)<br/>Full Replay & UI Transparency"]
-        C2["6. Zero-Touch Cleanup<br/>removedJobAction: 'DELETE'<br/>Auto-purges removed pipelines"]
+        C1["5. Script Injection<br/>Direct CPS script(...)<br/>Full Replay Enabled"]
+        C2["6. Zero-Touch Cleanup<br/>Action: 'DELETE'<br/>Auto-purges old jobs"]
         C1 --> C2
     end
 
