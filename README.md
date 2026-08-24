@@ -232,19 +232,19 @@ The reactive discovery engine executes a 6-stage discovery and lifecycle flow:
 
 ```mermaid
 flowchart TD
-    subgraph Phase1["🔍 Phase 1: SCM Scanning & Marker Detection"]
-        A["<b>1. Scan GitHub Organization</b><br/><code>organizationFolder('nubenetes')</code><br/><i>Periodic / Webhook SCM API Indexing</i>"]
-        B["<b>2. Detect Marker Jenkinsfile</b><br/><code>workflowMultiBranchProjectFactory</code><br/><i>Filters repos with local Jenkinsfile</i>"]
+    subgraph Phase1["Phase 1: SCM Scanning & Marker Detection"]
+        A["1. Scan GitHub Organization<br/>organizationFolder('nubenetes')<br/>Periodic SCM API Indexing"]
+        B["2. Detect Marker Jenkinsfile<br/>workflowMultiBranchFactory<br/>Filters repos with local Jenkinsfile"]
     end
 
-    subgraph Phase2["🌿 Phase 2: Branch & PR Filter Evaluation"]
-        C["<b>3. Regex Branch Discovery</b><br/><code>sourceRegexFilter('^(main|develop|...)')</code><br/><i>Discovers active feature/release branches</i>"]
-        D["<b>4. Pull Request Discovery & Trust</b><br/><code>gitHubPullRequestDiscovery(strategyId: 1)</code><br/><i>Builds pre-merge PR head vs target</i>"]
+    subgraph Phase2["Phase 2: Branch & PR Filter Evaluation"]
+        C["3. Regex Branch Discovery<br/>sourceRegexFilter('main|develop|*')<br/>Discovers active branches"]
+        D["4. Pull Request Discovery & Trust<br/>gitHubPullRequestDiscovery(strategy: 1)<br/>Builds pre-merge PR head vs target"]
     end
 
-    subgraph Phase3["⚙️ Phase 3: Pipeline Instantiation & Retention"]
-        E["<b>5. Local Jenkinsfile Execution</b><br/><code>cpsScm { scriptPath('Jenkinsfile') }</code><br/><i>Executes pipeline code from app repo</i>"]
-        F["<b>6. Orphan Branch Discarder</b><br/><code>orphanedItemStrategy { discardOld(7d) }</code><br/><i>Prunes deleted branch jobs</i>"]
+    subgraph Phase3["Phase 3: Pipeline Instantiation & Retention"]
+        E["5. Local Jenkinsfile Execution<br/>cpsScm with local scriptPath<br/>Runs pipeline from app repo"]
+        F["6. Orphan Branch Discarder<br/>orphanedItemStrategy(discard: 7d)<br/>Prunes deleted branch jobs"]
     end
 
     A --> B
@@ -252,12 +252,6 @@ flowchart TD
     C --> D
     D --> E
     E --> F
-
-    classDef default fill:#ffffff,stroke:#4a5568,stroke-width:1.5px;
-    classDef phaseBox fill:#f7fafc,stroke:#cbd5e0,stroke-width:1.5px;
-    classDef localStep fill:#fff5f5,stroke:#e53e3e,stroke-width:2px;
-    class Phase1,Phase2,Phase3 phaseBox;
-    class E localStep;
 ```
 
 #### Step-by-Step Mechanics:
@@ -309,19 +303,19 @@ The Job DSL Seed Job (`job-dsl/seed-job-pattern-b.groovy`) executes a 6-stage pr
 
 ```mermaid
 flowchart TD
-    subgraph Phase1["📥 Phase 1: Input Ingestion"]
-        A["<b>1. Parse YAML Inventories</b><br/><code>inventories/{dev,pre,pro}.yaml</code><br/><i>Parsed via YamlSlurper</i>"]
-        B["<b>2. Ingest Central Template</b><br/><code>jenkins-templates/SharedJenkinsfile</code><br/><i>Loaded via readFileFromWorkspace</i>"]
+    subgraph Phase1["Phase 1: Input Ingestion"]
+        A["1. Parse YAML Inventories<br/>inventories/{dev,pre,pro}.yaml<br/>Parsed via YamlSlurper"]
+        B["2. Ingest Central Template<br/>jenkins-templates/SharedJenkinsfile<br/>Loaded via readFileFromWorkspace"]
     end
 
-    subgraph Phase2["⚙️ Phase 2: Hierarchy & Binding"]
-        C["<b>3. Provision Folder Hierarchy</b><br/><code>&lt;env&gt; / &lt;team&gt; / &lt;app&gt;</code><br/><i>(e.g., dev/e-commerce/store-gateway)</i>"]
-        D["<b>4. Dynamic Parameter Binding</b><br/>• Git Repo URL & Branch<br/>• JVM Memory & Resource Limits<br/>• Target Namespace & Replicas"]
+    subgraph Phase2["Phase 2: Hierarchy & Binding"]
+        C["3. Provision Folder Tree<br/>env / team / app<br/>e.g. dev/e-commerce/gateway"]
+        D["4. Dynamic Parameter Binding<br/>Git URL, Branch, JVM Flags,<br/>CPU/Memory Limits, Namespace"]
     end
 
-    subgraph Phase3["🚀 Phase 3: Pipeline Injection & Lifecycle"]
-        E["<b>5. Direct CPS Script Injection</b><br/><code>definition { cps { script(...) } }</code><br/><i>Full Replay & GUI Transparency Active</i>"]
-        F["<b>6. Zero-Touch Garbage Collection</b><br/><code>removedJobAction('DELETE')</code><br/><i>Auto-purges orphaned pipelines</i>"]
+    subgraph Phase3["Phase 3: Pipeline Injection & Lifecycle"]
+        E["5. Direct CPS Script Injection<br/>definition { cps { script(...) } }<br/>Full Replay & GUI Transparency Active"]
+        F["6. Zero-Touch Garbage Collection<br/>removedJobAction('DELETE')<br/>Auto-purges orphaned pipelines"]
     end
 
     A --> B
@@ -329,12 +323,6 @@ flowchart TD
     C --> D
     D --> E
     E --> F
-
-    classDef default fill:#ffffff,stroke:#4a5568,stroke-width:1.5px;
-    classDef phaseBox fill:#f7fafc,stroke:#cbd5e0,stroke-width:1.5px;
-    classDef coreStep fill:#ebf8ff,stroke:#3182ce,stroke-width:2px;
-    class Phase1,Phase2,Phase3 phaseBox;
-    class E coreStep;
 ```
 
 #### Step-by-Step Mechanics:
