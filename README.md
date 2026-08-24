@@ -7,23 +7,29 @@
 <!-- GITHUB REPOSITORY BADGES                                                -->
 <!-- ======================================================================= -->
 <p align="center">
-  <!-- Core Architecture & GitOps -->
+  <!-- Core Architecture & CI/CD Status -->
+  <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/actions/workflows/ci.yml"><img src="https://github.com/nubenetes/jenkins-backstage-gitops-patterns/actions/workflows/ci.yml/badge.svg" alt="CI for CI" /></a>
   <a href="https://github.com/nubenetes/jenkins-backstage-gitops-patterns"><img src="https://img.shields.io/badge/Architecture-GitOps%20%7C%20JCasC%20%7C%20Job%20DSL-brightgreen.svg?style=for-the-badge&logo=git&logoColor=white" alt="Architecture" /></a>
   <a href="https://jenkins.io"><img src="https://img.shields.io/badge/Jenkins-LTS%20JDK21-D24939.svg?style=for-the-badge&logo=jenkins&logoColor=white" alt="Jenkins" /></a>
-  <a href="https://backstage.io"><img src="https://img.shields.io/badge/Backstage-Scaffolder%20v1beta3-9BF0E1.svg?style=for-the-badge&logo=spotify&logoColor=black" alt="Backstage" /></a>
-  <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift"><img src="https://img.shields.io/badge/OpenShift-4.14%2B-EE0000.svg?style=for-the-badge&logo=redhatopenshift&logoColor=white" alt="OpenShift" /></a>
-  <a href="https://kubernetes.io"><img src="https://img.shields.io/badge/Kubernetes-1.28%2B-326CE5.svg?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes" /></a>
+  <a href="https://backstage.io"><img src="https://img.shields.io/badge/Backstage-1.30%2B%20%7C%20Scaffolder%20v1beta3-9BF0E1.svg?style=for-the-badge&logo=spotify&logoColor=black" alt="Backstage" /></a>
+  <a href="https://argo-cd.readthedocs.io"><img src="https://img.shields.io/badge/ArgoCD-3.x%20%7C%20GitOps-EF7B42.svg?style=for-the-badge&logo=argo&logoColor=white" alt="ArgoCD" /></a>
+  <a href="https://www.redhat.com/en/technologies/cloud-computing/openshift"><img src="https://img.shields.io/badge/OpenShift-4.17%2B-EE0000.svg?style=for-the-badge&logo=redhatopenshift&logoColor=white" alt="OpenShift" /></a>
+  <a href="https://kubernetes.io"><img src="https://img.shields.io/badge/Kubernetes-1.31%2B-326CE5.svg?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes" /></a>
 </p>
 
 <p align="center">
-  <!-- Stack & Ecosystem -->
+  <!-- Stack, Supply Chain Security & Observability -->
   <img src="https://img.shields.io/badge/Java-21%20LTS-ED8B00.svg?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
-  <img src="https://img.shields.io/badge/Spring%20Boot-3.2.3-6DB33F.svg?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
-  <img src="https://img.shields.io/badge/JHipster-Microservices-006272.svg?style=flat-square&logo=jhipster&logoColor=white" alt="JHipster" />
-  <img src="https://img.shields.io/badge/Helm-v3-0F1689.svg?style=flat-square&logo=helm&logoColor=white" alt="Helm" />
-  <img src="https://img.shields.io/badge/Groovy-Job%20DSL-4298B8.svg?style=flat-square&logo=apachegroovy&logoColor=white" alt="Job DSL" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.4.1-6DB33F.svg?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/Security-SLSA%20Level%203-darkgreen.svg?style=flat-square&logo=securityscorecard&logoColor=white" alt="SLSA" />
+  <img src="https://img.shields.io/badge/Signing-Sigstore%20Cosign-4B32C3.svg?style=flat-square" alt="Cosign" />
+  <img src="https://img.shields.io/badge/SBOM-CycloneDX%20%7C%20Syft-005571.svg?style=flat-square" alt="Syft" />
+  <img src="https://img.shields.io/badge/Secrets-Gitleaks-critical.svg?style=flat-square" alt="Gitleaks" />
+  <img src="https://img.shields.io/badge/Tracing-OpenTelemetry-blue.svg?style=flat-square&logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
+  <img src="https://img.shields.io/badge/Metrics-Grafana-orange.svg?style=flat-square&logo=grafana&logoColor=white" alt="Grafana" />
   <img src="https://img.shields.io/badge/SonarQube-Quality%20Gate-4E9BCD.svg?style=flat-square&logo=sonarqube&logoColor=white" alt="SonarQube" />
   <img src="https://img.shields.io/badge/Kaniko-Rootless%20Builds-FF6F00.svg?style=flat-square&logo=docker&logoColor=white" alt="Kaniko" />
+  <img src="https://img.shields.io/badge/Helm-v3%20%2F%20v4-0F1689.svg?style=flat-square&logo=helm&logoColor=white" alt="Helm" />
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square" alt="License" />
 </p>
 
@@ -43,10 +49,10 @@
 ## 📌 About This Repository
 
 > **One-liner Description (GitHub About):**
-> *Production-grade GitOps reference architecture comparing Backstage Scaffolder integration patterns with Jenkins (Reactive Multibranch vs. Centralized JCasC/Job DSL Seed Jobs with Direct CPS Script Injection).*
+> *Enterprise Platform Engineering blueprint integrating Spotify Backstage with Jenkins on OpenShift using Job DSL, JCasC, GitOps inventories, Supply Chain Security (SLSA, Cosign, Syft), and ArgoCD.*
 
 ### 🏷️ GitHub Topics / Tags
-`backstage` • `backstage-scaffolder` • `jenkins` • `jenkins-casc` • `jcasc` • `job-dsl` • `gitops` • `openshift` • `kubernetes` • `helm` • `spring-boot` • `jhipster` • `microservices` • `kaniko` • `sonarqube` • `declarative-pipeline` • `devops-platform` • `internal-developer-platform`
+`backstage` • `jenkins` • `gitops` • `job-dsl` • `jcasc` • `openshift` • `kubernetes` • `argocd` • `spring-boot` • `java-21` • `slsa` • `cosign` • `syft` • `gitleaks` • `opentelemetry` • `grafana` • `sonarqube` • `platform-engineering` • `microservices` • `devops`
 
 ---
 
