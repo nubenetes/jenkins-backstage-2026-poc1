@@ -93,13 +93,14 @@
    - [6. Environment Inventories (`inventories/*.yaml`)](#component-environment-inventories)
    - [7. Backstage Scaffolder Templates (`backstage/templates`)](#component-backstage-templates)
    - [8. Sample JHipster Microservice (`samples/jhipster-microservice`)](#component-jhipster-microservice)
-10. [Enterprise OpenShift & Kubernetes Considerations](#openshift-kubernetes-considerations)
+10. [Enterprise OpenShift, ArgoCD & Modern Stack Standards](#openshift-kubernetes-considerations)
 11. [Step-by-Step Operations Guide](#step-by-step-guide)
     - [1. Day-1: Bootstrap Jenkins Controller](#guide-day-1-bootstrap)
     - [2. Day-2 Pattern A: Provision Multibranch Scanner](#guide-day-2-pattern-a)
     - [3. Day-2 Pattern B: Register a New Application](#guide-day-2-register)
     - [4. Day-3 Pattern B: Decommission an Application](#guide-day-3-decommission)
-12. [License](#license)
+12. [References & Works Cited](#references)
+13. [License](#license)
 
 ---
 
@@ -651,6 +652,62 @@ Cleanly retire an application and trigger automatic job deletion in Jenkins:
   --name payment-service \
   --environment dev
 ```
+
+---
+
+<a id="references"></a>
+## 📚 References & Works Cited
+
+This architecture blueprint is synthesized from deep enterprise research, open-source standards, and industry platform engineering implementations:
+
+### ⚙️ Jenkins, Job DSL & Configuration as Code (JCasC)
+* **Job DSL Plugin Documentation**: [Jenkins Plugins: Job DSL](https://plugins.jenkins.io/job-dsl/)
+* **Job DSL Source Code & API**: [jenkinsci/job-dsl-plugin GitHub](https://github.com/jenkinsci/job-dsl-plugin) & [Job DSL API Reference](https://jenkinsci.github.io/job-dsl-plugin/)
+* **Job DSL Script Security & Sandbox**: [Job DSL Wiki: Script Security](https://github.com/jenkinsci/job-dsl-plugin/wiki/Script-Security)
+* **JCasC Job Management**: [Configuration as Code Plugin: Job Management Demos](https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/demos/jobs/README.md)
+* **JCasC & Seed Job Setup**: [Creating a Job DSL Seed Job with JCasC - gerg.dev](https://gerg.dev/2020/06/creating-a-job-dsl-seed-job-with-jcasc/)
+* **Job DSL & Shared Libraries**: [Combining Jenkins' Job DSL and Shared Libraries for Docker Images - V. Zurczak](https://vzurczak.wordpress.com/2020/04/17/combining-jenkins-job-dsl-and-shared-libraries-for-docker-images-pipelines/)
+* **Enterprise Seed Job Setup**: [Setting Up a Shared Library and Seed Job in Jenkins - Ippon Tech](https://github.com/ippontech/blog-usa/blob/master/posts/setting-up-a-shared-library-and-seed-job-in-jenkins-part-1.md)
+* **Automating Pipelines with Job DSL**: [Automating Jenkins Jobs Using Job DSL Plugin - S. Manamperi](https://sachithramanamperi.medium.com/automating-jenkins-jobs-using-job-dsl-plugin-38b67eb0f629)
+* **Practical Job DSL Guides**: [Jenkins and Job DSL Plugin - Metadrop](https://metadrop.net/en/articles/jenkins-and-job-dsl-plugin) & [Jenkins – DSL Multibranch Pipeline Creating by Seed Job](https://artem.services/?p=877&lang=en)
+* **Community Discussions**:
+  * [Creating Repeatable Multibranch Pipelines with Groovy - Reddit](https://www.reddit.com/r/jenkinsci/comments/1e1vyq7/creating_repeatable_multi_branch_pipelines_with/)
+  * [Create Jenkins Jobs from a Git Directory with Job DSL Files - StackOverflow](https://stackoverflow.com/questions/48408821/create-jenkins-jobs-from-a-git-directory-with-job-dsl-files)
+  * [How to Create/Manage Jenkins Pipelines Automatically? - DevOps StackExchange](https://devops.stackexchange.com/questions/21587/how-to-create-manage-jenkins-pipelines-not-jobs-automatically)
+  * [MultiBranch Webhook Trigger Discussion - Jenkins Community](https://community.jenkins.io/t/multibranch-webhook-trigger/6583)
+  * [Disposable Jenkins & GitOps Discussion - Jenkins Dev Group](https://groups.google.com/g/jenkinsci-dev/c/1gc8t6MAl4g)
+* **Pipeline Tutorials**: [How to Write a Jenkinsfile inside GitHub Repository - YouTube](https://www.youtube.com/watch?v=JrxnsDvHAVs)
+
+### 🎭 Spotify Backstage & Internal Developer Portals (IDP)
+* **Backstage Software Templates**: [Backstage Official Docs: Software Templates](https://backstage.io/docs/features/software-templates/) & [Template Configuration](https://backstage.io/docs/features/software-templates/configuration/)
+* **Authoring Custom Templates**: [Adding Your Own Templates in Backstage](https://backstage.io/docs/features/software-templates/adding-templates/)
+* **Software Catalog Architecture**: [Backstage Software Catalog](https://backstage.io/docs/features/software-catalog/) & [Well-known Entity Annotations](https://backstage.io/docs/features/software-catalog/well-known-annotations/)
+* **Red Hat Developer Hub & OpenShift**:
+  * [How to Implement Developer Self-Service with Backstage - Red Hat Developer](https://developers.redhat.com/articles/2025/06/25/how-implement-developer-self-service-backstage)
+  * [Build Your First Software Template for Backstage - Red Hat Developer](https://developers.redhat.com/articles/2025/08/12/build-your-first-software-template-backstage)
+  * [IDP on OpenShift with Red Hat Developer Hub - Piotr's TechBlog](https://piotrminkowski.com/2024/07/04/idp-on-openshift-with-red-hat-developer-hub/)
+  * [Backstage Dynamic Plugins with Red Hat Developer Hub - Piotr's TechBlog](https://piotrminkowski.com/2025/06/13/backstage-dynamic-plugins-with-red-hat-developer-hub/)
+  * [Getting Started with Red Hat Developer Hub (Part 2) - Vikas Pogu](https://vikaspogu.dev/blog/developer-hub-getting-started-part-2/)
+* **Backstage Jenkins Plugins & Scaffolder Actions**:
+  * [@backstage-community/plugin-scaffolder-backend-module-jenkins - npm](https://www.npmjs.com/package/@backstage-community/plugin-scaffolder-backend-module-jenkins)
+  * [Backstage Community Jenkins Backend Plugin - GitHub](https://github.com/backstage/community-plugins/blob/master/workspaces/jenkins/plugins/jenkins-backend/README.md)
+  * [Jenkins Plugin for Spotify Backstage](https://backstage.spotify.com/partners/spotify/plugin/jenkins/)
+  * [Roadie.io Backstage Jenkins Integration](https://roadie.io/docs/integrations/jenkins/) & [Jenkins Plugin Overview](https://roadie.io/backstage/plugins/jenkins/)
+  * [Scaffolder Action: Jenkins Job Build - Roadie.io](https://roadie.io/backstage/scaffolder-actions/jenkins-job-build/)
+  * [Scaffolder Action: Catalog Write - Roadie.io](https://roadie.io/backstage/scaffolder-actions/catalog-write/)
+  * [Backstage Scaffolder Jenkins Client Actions - Roadie.io](https://roadie.io/backstage/plugins/scaffolder-jenkins-client-actions/)
+* **IDP & Self-Service Patterns**:
+  * [Jenkins as Self-Service UI - Port.io](https://www.port.io/blog/jenkins-as-self-service-ui) & [Port Jenkins Pipeline Documentation](https://docs.port.io/workflows/actions-and-automations/setup-backend/jenkins-pipeline/)
+  * [Jenkins Integration - Harness Developer Hub](https://developer.harness.io/docs/internal-developer-portal/plugins/available-plugins/jenkins/)
+  * [Add Jenkins CI/CD to Backstage with Keycloak SSO - Makson Lee](https://www.maksonlee.com/add-jenkins-ci-cd-to-backstage-with-keycloak-sso-no-docker/)
+  * [Integrating AWS DevOps Services into Backstage - CloudThat](https://www.cloudthat.com/resources/blog/integrating-aws-devops-services-into-backstage-part-2)
+  * [Can Backstage Templates Publish New Files to Existing Repos? - StackOverflow](https://stackoverflow.com/questions/79369852/can-backstage-templates-publish-new-files-to-existing-repos)
+  * [Add catalog-info.yaml for All Repos in a GitHub Org - Gist](https://gist.github.com/axdotl/8231abd46793ea23160662c3d81f4ba9)
+
+### ☁️ Cloud-Native Infrastructure, OpenShift & Kubernetes
+* **Red Hat OpenShift on AWS (ROSA)**: [ROSA Best Practices and Recommendations](https://cloud.redhat.com/experts/rosa/best-practices-recommendations/)
+* **Kubernetes DevOps Architecture**: [K8s DevOps Solutions - Ycon](https://www.ycon.co.il/k8s)
+* **Infrastructure as Code & Direct Operations**: [Direct Resource Operations - Pulumi Docs](https://www.pulumi.com/docs/iac/cli/direct-resource-operations/)
 
 ---
 
