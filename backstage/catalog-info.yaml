@@ -13,6 +13,7 @@ metadata:
     github.com/project-slug: nubenetes/jenkins-backstage-gitops-patterns
     jenkins.io/job-full-name: Seed_Job_Pattern_B
     backstage.io/techdocs-ref: dir:.
+    ai.google.com/co-author: gemini-3.7-flash-agent
   tags:
     - jenkins
     - backstage
@@ -21,6 +22,7 @@ metadata:
     - gitops
     - openshift
     - kubernetes
+    - gemini-3.7-flash-agent
   links:
     - url: https://github.com/nubenetes/jenkins-backstage-gitops-patterns
       title: GitHub Repository
