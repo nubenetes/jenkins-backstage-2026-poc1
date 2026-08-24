@@ -31,7 +31,7 @@ spec:
   serviceAccountName: jenkins-agent
   containers:
     - name: maven
-      image: maven:3.9.6-eclipse-temurin-21-alpine
+      image: maven:3.9.9-eclipse-temurin-21-alpine
       command: ['cat']
       tty: true
       resources:
@@ -42,7 +42,7 @@ spec:
           cpu: "2000m"
           memory: "3072Mi"
     - name: gitleaks
-      image: zricethezav/gitleaks:latest
+      image: zricethezav/gitleaks:v8.21.2
       command: ['cat']
       tty: true
       resources:
@@ -53,7 +53,7 @@ spec:
           cpu: "500m"
           memory: "256Mi"
     - name: kaniko
-      image: gcr.io/kaniko-project/executor:debug
+      image: gcr.io/kaniko-project/executor:v1.23.2-debug
       command: ['cat']
       tty: true
       resources:
@@ -64,7 +64,7 @@ spec:
           cpu: "1500m"
           memory: "1024Mi"
     - name: syft
-      image: anchore/syft:latest
+      image: anchore/syft:v1.17.0
       command: ['cat']
       tty: true
       resources:
@@ -75,7 +75,7 @@ spec:
           cpu: "500m"
           memory: "512Mi"
     - name: cosign
-      image: sigstore/cosign:latest
+      image: sigstore/cosign:v2.4.1
       command: ['cat']
       tty: true
       resources:
@@ -86,7 +86,7 @@ spec:
           cpu: "500m"
           memory: "256Mi"
     - name: oc-cli
-      image: quay.io/openshift/origin-cli:latest
+      image: quay.io/openshift/origin-cli:4.17
       command: ['cat']
       tty: true
       resources:

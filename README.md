@@ -494,6 +494,9 @@ To protect the central controller from broken configurations:
 │       └── pattern-b-app-template.yaml # Backstage template: registers app in inventories/ (No Jenkinsfile)
 ├── dashboards/
 │   └── jenkins-gitops-metrics.json    # Production-ready Grafana metrics dashboard
+├── gitops/
+│   └── argocd/
+│       └── application.yaml           # Modern ArgoCD v3.x Application (ServerSideApply, auto-sync)
 ├── samples/
 │   └── jhipster-microservice/         # Minimal JHipster Java microservice stub (No Jenkinsfile in repo)
 │       ├── pom.xml                    # Spring Boot / Maven definition
@@ -584,16 +587,19 @@ A standard Java 21 / Spring Boot 3 JHipster microservice stub. Notice that **no 
 ---
 
 <a id="openshift-kubernetes-considerations"></a>
-## 🛡️ Enterprise OpenShift & Kubernetes Considerations
+## 🛡️ Enterprise OpenShift, ArgoCD & Modern Stack Standards
 
-When running this architecture on Red Hat OpenShift:
-1. **Security Context Constraints (SCC)**:
-   * Dynamic agent pods must run with the `restricted-v2` or `anyuid` SCC depending on container image requirements.
-   * Container builds should leverage **Kaniko** (rootless/daemonless) or OpenShift native **BuildConfigs** (Source-to-Image / Docker strategy) to avoid mounting Docker sockets.
-2. **Service Accounts & RBAC**:
-   * Jenkins Controller requires a dedicated ServiceAccount with permissions to spawn pods in the `jenkins-agents` namespace (`RoleBinding` to `system:image-puller` and pod manager roles).
-3. **OpenShift Route & TLS**:
-   * Jenkins Controller is exposed via an edge or re-encrypt OpenShift `Route` with sticky sessions enabled for seamless UI interaction.
+This blueprint is engineered to adhere to the latest stable enterprise releases and modern platform engineering practices:
+
+| Component | Target Release | Architectural Standards & Recommended Configurations |
+| :--- | :--- | :--- |
+| **Red Hat OpenShift** | **v4.16 / v4.17 (K8s 1.30/1.31)** | Strict compliance with `restricted-v2` Security Context Constraints (SCC): `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `seccompProfile: { type: RuntimeDefault }`, `capabilities: { drop: ["ALL"] }`. TLS edge-termination Routes with HAProxy 5m timeout. |
+| **ArgoCD / OpenShift GitOps** | **v3.x / v2.13+** | Declarative `Application` (`argoproj.io/v1alpha1`) leveraging **Server-Side Apply (`ServerSideApply=true`)**, Automated Pruning (`prune: true`), Self-Healing (`selfHeal: true`), and sync waves for deterministic multi-tier deployment order. |
+| **Jenkins Controller & Agents** | **LTS v2.479.3+ (Java 21 LTS)** | Native Eclipse Temurin JDK 21 LTS runtime. Headless controller execution (`-Djava.awt.headless=true`), Jenkins Configuration as Code (JCasC), Project Matrix RBAC, and dynamic Kubernetes agent clouds. |
+| **Helm Package Manager** | **v3.16+ / v4.x** | Standard `apiVersion: v2` chart specification with OCI registry chart distribution support and atomic installation flags (`--atomic --timeout 5m`). |
+| **Spotify Backstage** | **v1.30+ / Backend System v2** | Scaffolder `v1beta3` action pipelines, declarative plugin architecture, TechDocs integration, and automated Tech Insights Production Readiness Scorecards. |
+| **Spring Boot Microservices** | **v3.4.x / Java 21 LTS** | Spring Boot 3.4 with Java 21 virtual threads, actuator health metrics, CycloneDX Maven plugin, and Jacoco unit test coverage $\ge 80\%$. |
+| **Supply Chain Security** | **SLSA Level 3 Ready** | Gitleaks v8.21+ secret scanning, Anchore Syft v1.17+ CycloneDX SBOM generator, and Sigstore Cosign v2.4+ keyless container image signing. |
 
 ---
 
