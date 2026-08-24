@@ -100,8 +100,7 @@
     - [3. Day-2 Pattern B: Register a New Application](#guide-day-2-register)
     - [4. Day-3 Pattern B: Decommission an Application](#guide-day-3-decommission)
 12. [References & Works Cited](#references)
-13. [Contributors & Authors](#contributors)
-14. [License](#license)
+13. [License](#license)
 
 ---
 
@@ -715,18 +714,6 @@ This architecture blueprint is synthesized from deep enterprise research, open-s
 * **Red Hat OpenShift on AWS (ROSA)**: [ROSA Best Practices and Recommendations](https://cloud.redhat.com/experts/rosa/best-practices-recommendations/)
 * **Kubernetes DevOps Architecture**: [K8s DevOps Solutions - Ycon](https://www.ycon.co.il/k8s)
 * **Infrastructure as Code & Direct Operations**: [Direct Resource Operations - Pulumi Docs](https://www.pulumi.com/docs/iac/cli/direct-resource-operations/)
-
----
-
-<a id="contributors"></a>
-## 👥 Contributors & Authors
-
-This project is maintained and actively developed by:
-
-* **Lead Architect & Platform Engineer**: **[Iñaki / NubeNetes](https://github.com/nubenetes)** (`inafev@gmail.com`)
-* **Autonomous AI Architecture Contributor**: **[Gemini 3.7 Flash Agent (Google Antigravity)](https://deepmind.google/technologies/gemini/)** — *Advanced Agentic Coding, automated refactoring, and enterprise platform engineering blueprint synthesis.*
-
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/nubenetes/jenkins-backstage-gitops-patterns/issues).
 
 ---
 

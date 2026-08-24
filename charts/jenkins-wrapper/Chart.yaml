@@ -15,8 +15,6 @@ keywords:
 maintainers:
   - name: NubeNetes CI/CD Platform Team
     email: platform-engineering@nubenetes.io
-  - name: Gemini 3.7 Flash Agent (Google Antigravity)
-    email: antigravity-agent@google.com
 dependencies:
   - name: jenkins
     version: "5.8.15"
