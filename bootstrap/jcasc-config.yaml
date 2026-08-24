@@ -1,0 +1,153 @@
+# ==============================================================================
+# Jenkins Configuration as Code (JCasC) - Bootstrap Specification
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: bootstrap/jcasc-config.yaml
+# ==============================================================================
+# This configuration demonstrates the bootstrap definition used by JCasC to
+# instantiate the Jenkins Master and create the initial Seed Jobs for both
+# Pattern A (Multibranch Org Folder) and Pattern B (Inventory-Driven DSL).
+# ==============================================================================
+
+jenkins:
+  systemMessage: "🚀 Jenkins 2026 Enterprise GitOps Engine | Managed by JCasC & Backstage Scaffolder"
+  numExecutors: 0
+  mode: EXCLUSIVE
+  scmCheckoutRetryCount: 3
+
+  # Security and Global Authorization
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123456}"
+          description: "Default Platform Administrator"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  # Cloud configuration for Kubernetes / OpenShift dynamic agent pods
+  clouds:
+    - kubernetes:
+        name: "openshift-cluster"
+        serverUrl: "https://kubernetes.default.svc"
+        namespace: "${JENKINS_AGENT_NAMESPACE:-jenkins-ci}"
+        jenkinsUrl: "http://jenkins-controller:8080"
+        jenkinsTunnel: "jenkins-controller-agent:50000"
+        containerCapStr: "100"
+        retentionTimeout: 10
+        connectTimeout: 100
+        templates:
+          - name: "jhipster-builder-agent"
+            label: "jhipster-builder"
+            nodeUsageMode: "EXCLUSIVE"
+            idleMinutes: 5
+            serviceAccount: "jenkins-agent"
+            workspaceVolume:
+              emptyDirWorkspaceVolume:
+                memory: false
+            containers:
+              - name: "jnlp"
+                image: "jenkins/inbound-agent:3206.vb_15d72085c02-1-jdk21"
+                workingDir: "/home/jenkins/agent"
+                resourceRequestCpu: "200m"
+                resourceRequestMemory: "256Mi"
+                resourceLimitCpu: "500m"
+                resourceLimitMemory: "512Mi"
+              - name: "maven"
+                image: "maven:3.9.6-eclipse-temurin-21-alpine"
+                workingDir: "/home/jenkins/agent"
+                command: "sleep"
+                args: "99d"
+                resourceRequestCpu: "1000m"
+                resourceRequestMemory: "1024Mi"
+                resourceLimitCpu: "2000m"
+                resourceLimitMemory: "3072Mi"
+              - name: "kaniko"
+                image: "gcr.io/kaniko-project/executor:debug"
+                workingDir: "/home/jenkins/agent"
+                command: "sleep"
+                args: "99d"
+                resourceRequestCpu: "500m"
+                resourceRequestMemory: "512Mi"
+                resourceLimitCpu: "2000m"
+                resourceLimitMemory: "2048Mi"
+              - name: "oc-cli"
+                image: "quay.io/openshift/origin-cli:latest"
+                workingDir: "/home/jenkins/agent"
+                command: "sleep"
+                args: "99d"
+                resourceRequestCpu: "200m"
+                resourceRequestMemory: "256Mi"
+
+unclassified:
+  location:
+    adminAddress: "platform-ci@nubenetes.io"
+    url: "${JENKINS_URL:-http://localhost:8080/}"
+
+  # SonarQube Global Server Configuration
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: "SonarQube-Enterprise"
+        serverUrl: "${SONAR_HOST_URL:-http://sonarqube.sonarqube.svc.cluster.local:9000}"
+        credentialsId: "sonarqube-token"
+
+# ==============================================================================
+# JCasC Job Management - Initial Seed Job Provisioning
+# ==============================================================================
+jobs:
+  - script: >
+      // Bootstrap Seed Job for Pattern B (Centralized Inventory-Driven Architecture)
+      pipelineJob('Seed_Job_Pattern_B') {
+        displayName('🌱 Centralized GitOps Seed Job (Pattern B)')
+        description('Orchestrates dynamic pipeline generation across dev, pre, and pro environments from YAML inventories.')
+        keepDependencies(false)
+        logRotator {
+          numToKeep(30)
+          daysToKeep(60)
+        }
+        triggers {
+          scm('H/5 * * * *')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/nubenetes/jenkins-backstage-2026-poc1.git')
+                  credentials('git-credentials-id')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('job-dsl/seed-job-pattern-b.groovy')
+            lightweight(true)
+          }
+        }
+      }
+
+  - script: >
+      // Bootstrap Seed Job for Pattern A (Reactive Multibranch / Org Folder Discovery)
+      freeStyleJob('Seed_Job_Pattern_A') {
+        displayName('🔍 Reactive Branch Discovery Seed Job (Pattern A)')
+        description('Provisions Organization Folder and Multibranch Pipelines with automated branch scanning.')
+        scm {
+          git {
+            remote {
+              url('https://github.com/nubenetes/jenkins-backstage-2026-poc1.git')
+              credentials('git-credentials-id')
+            }
+            branch('*/main')
+          }
+        }
+        steps {
+          jobDsl {
+            targets('job-dsl/seed-job-pattern-a.groovy')
+            removedJobAction('IGNORE')
+            removedViewAction('IGNORE')
+            lookupStrategy('JENKINS_ROOT')
+          }
+        }
+      }

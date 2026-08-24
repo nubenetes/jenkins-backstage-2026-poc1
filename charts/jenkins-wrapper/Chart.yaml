@@ -1,0 +1,20 @@
+apiVersion: v2
+name: jenkins-wrapper
+description: Enterprise Jenkins Wrapper Helm Chart for GitOps Backstage Scaffolder Integration (OpenShift / Kubernetes)
+type: application
+version: 1.0.0
+appVersion: "2.479.1"
+keywords:
+  - jenkins
+  - gitops
+  - backstage
+  - job-dsl
+  - jcasc
+  - openshift
+maintainers:
+  - name: NubeNetes CI/CD Platform Team
+    email: platform-engineering@nubenetes.io
+dependencies:
+  - name: jenkins
+    version: "5.7.0"
+    repository: "https://charts.jenkins.io"

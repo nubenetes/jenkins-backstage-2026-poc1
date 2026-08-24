@@ -1,0 +1,47 @@
+# ==============================================================================
+# Production Environment Inventory (pro)
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: inventories/pro.yaml
+# ==============================================================================
+
+environment: pro
+cluster: openshift-prod-cluster-01
+namespace: apps-pro
+registry: quay.io/nubenetes-prod
+
+defaults:
+  jvm_memory: "-Xms1024m -Xmx2048m"
+  cpu_limit: "2000m"
+  memory_limit: "4Gi"
+  replicas: 3
+
+applications:
+  - name: store-gateway
+    team: e-commerce
+    repository: "https://github.com/nubenetes/sample-jhipster-gateway.git"
+    branch: "main"
+    jvm_memory: "-Xms2048m -Xmx4096m"
+    cpu_limit: "4000m"
+    memory_limit: "8Gi"
+    replicas: 4
+    sonar_enabled: true
+
+  - name: invoice-service
+    team: billing
+    repository: "https://github.com/nubenetes/sample-invoice-service.git"
+    branch: "main"
+    jvm_memory: "-Xms1024m -Xmx2048m"
+    cpu_limit: "2000m"
+    memory_limit: "4Gi"
+    replicas: 3
+    sonar_enabled: true
+
+  - name: order-service
+    team: e-commerce
+    repository: "https://github.com/nubenetes/sample-order-service.git"
+    branch: "main"
+    jvm_memory: "-Xms2048m -Xmx4096m"
+    cpu_limit: "4000m"
+    memory_limit: "8Gi"
+    replicas: 3
+    sonar_enabled: true

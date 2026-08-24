@@ -1,0 +1,18 @@
+# OS & IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+.m2/
+
+# Logs
+*.log

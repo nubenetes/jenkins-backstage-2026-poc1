@@ -1,0 +1,97 @@
+# ==============================================================================
+# Backstage Scaffolder Template: Pattern A (Application with Local Jenkinsfile)
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: backstage/templates/pattern-a-app-template.yaml
+# ==============================================================================
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: jhipster-microservice-pattern-a
+  title: "JHipster Microservice (Pattern A: Local Jenkinsfile)"
+  description: "Scaffolds a Spring Boot JHipster microservice with an embedded Jenkinsfile inside the app repository for Multibranch discovery."
+  tags:
+    - java
+    - spring-boot
+    - jhipster
+    - jenkins
+    - pattern-a
+    - multibranch
+
+spec:
+  owner: platform-engineering
+  type: service
+
+  parameters:
+    - title: Microservice Metadata
+      required:
+        - component_id
+        - description
+        - owner
+      properties:
+        component_id:
+          title: Component Name
+          type: string
+          description: Unique identifier for the service (e.g. payment-service)
+          ui:field: EntityNamePicker
+        description:
+          title: Description
+          type: string
+          description: A brief summary of the microservice's functionality
+        owner:
+          title: Owning Team
+          type: string
+          description: Team responsible for maintaining this microservice
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+
+    - title: Git Repository Destination
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+              - gitlab.com
+
+  steps:
+    - id: template
+      name: Generate Application Boilerplate & Local Jenkinsfile
+      action: fetch:template
+      input:
+        url: ./skeleton-pattern-a
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          destination: ${{ parameters.repoUrl }}
+
+    - id: publish
+      name: Publish Repository to Git Provider
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: develop
+        protectDefaultBranch: true
+
+    - id: register
+      name: Register Component in Backstage Software Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Source Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Software Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

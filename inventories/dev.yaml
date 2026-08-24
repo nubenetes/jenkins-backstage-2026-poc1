@@ -1,0 +1,57 @@
+# ==============================================================================
+# Development Environment Inventory (dev)
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: inventories/dev.yaml
+# ==============================================================================
+
+environment: dev
+cluster: openshift-dev-cluster-01
+namespace: apps-dev
+registry: image-registry.openshift-image-registry.svc:5000
+
+defaults:
+  jvm_memory: "-Xms256m -Xmx512m"
+  cpu_limit: "500m"
+  memory_limit: "1Gi"
+  replicas: 1
+
+applications:
+  - name: store-gateway
+    team: e-commerce
+    repository: "https://github.com/nubenetes/sample-jhipster-gateway.git"
+    branch: "develop"
+    jvm_memory: "-Xms512m -Xmx1024m"
+    cpu_limit: "1000m"
+    memory_limit: "2Gi"
+    replicas: 2
+    sonar_enabled: true
+
+  - name: invoice-service
+    team: billing
+    repository: "https://github.com/nubenetes/sample-invoice-service.git"
+    branch: "develop"
+    jvm_memory: "-Xms256m -Xmx512m"
+    cpu_limit: "500m"
+    memory_limit: "1Gi"
+    replicas: 1
+    sonar_enabled: true
+
+  - name: notification-service
+    team: core-platform
+    repository: "https://github.com/nubenetes/sample-notification-service.git"
+    branch: "feature/kafka-events"
+    jvm_memory: "-Xms256m -Xmx512m"
+    cpu_limit: "500m"
+    memory_limit: "1Gi"
+    replicas: 1
+    sonar_enabled: false
+
+  - name: order-service
+    team: e-commerce
+    repository: "https://github.com/nubenetes/sample-order-service.git"
+    branch: "develop"
+    jvm_memory: "-Xms512m -Xmx1024m"
+    cpu_limit: "1000m"
+    memory_limit: "2Gi"
+    replicas: 1
+    sonar_enabled: true

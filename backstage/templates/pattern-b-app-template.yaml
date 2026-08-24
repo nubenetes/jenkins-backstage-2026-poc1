@@ -1,0 +1,170 @@
+# ==============================================================================
+# Backstage Scaffolder Template: Pattern B (Zero-Jenkinsfile + GitOps Inventory PR)
+# Repository: github.com/nubenetes/jenkins-backstage-2026-poc1
+# File: backstage/templates/pattern-b-app-template.yaml
+# ==============================================================================
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: jhipster-microservice-pattern-b
+  title: "JHipster Microservice (Pattern B: GitOps Centralized Inventory)"
+  description: "Provisions a clean Spring Boot microservice (ZERO CI boilerplate) and automatically submits a GitOps PR to register it in dev.yaml."
+  tags:
+    - java
+    - spring-boot
+    - jhipster
+    - gitops
+    - pattern-b
+    - seed-job
+    - jcasc
+
+spec:
+  owner: platform-engineering
+  type: service
+
+  parameters:
+    - title: Microservice Metadata
+      required:
+        - component_id
+        - description
+        - owner
+        - team
+      properties:
+        component_id:
+          title: Microservice Identifier
+          type: string
+          description: Unique service name (e.g., checkout-service)
+          ui:field: EntityNamePicker
+        description:
+          title: Description
+          type: string
+          description: Purpose of this microservice
+        owner:
+          title: Service Owner
+          type: string
+          ui:field: OwnerPicker
+        team:
+          title: Owning Engineering Team
+          type: string
+          description: Team name for folder grouping in Jenkins (e.g., e-commerce, billing)
+          default: e-commerce
+
+    - title: Resource Sizing & Governance (Dev Environment)
+      properties:
+        jvm_memory:
+          title: JVM Memory Options
+          type: string
+          default: "-Xms256m -Xmx512m"
+        cpu_limit:
+          title: CPU Limit
+          type: string
+          default: "500m"
+        memory_limit:
+          title: Memory Limit
+          type: string
+          default: "1Gi"
+        sonar_enabled:
+          title: Enable SonarQube Quality Gate
+          type: boolean
+          default: true
+
+    - title: Target Application Repository
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Destination Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+              - gitlab.com
+
+  steps:
+    # 1. Generate Clean Application Boilerplate (No Jenkinsfile!)
+    - id: fetch-app-skeleton
+      name: Scaffold Clean Spring Boot / JHipster Codebase
+      action: fetch:template
+      input:
+        url: ./skeleton-pattern-b
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          team: ${{ parameters.team }}
+        targetPath: ./app-workspace
+
+    # 2. Publish New Pure-Business-Logic App Repository
+    - id: publish-app-repo
+      name: Publish Clean Microservice Repository
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: develop
+        sourcePath: ./app-workspace
+
+    # 3. Clone Centralized CI/CD Configuration Repository
+    - id: fetch-config-repo
+      name: Fetch Centralized Jenkins GitOps Control Repository
+      action: fetch:plain
+      input:
+        url: https://github.com/nubenetes/jenkins-backstage-2026-poc1.git
+        targetPath: ./central-config-workspace
+
+    # 4. Append Application Metadata to inventories/dev.yaml
+    - id: register-in-inventory
+      name: Register Microservice in inventories/dev.yaml
+      action: roadiehq:utils:fs:append
+      input:
+        path: ./central-config-workspace/inventories/dev.yaml
+        content: |
+
+            - name: ${{ parameters.component_id }}
+              team: ${{ parameters.team }}
+              repository: "${{ steps.publish-app-repo.output.remoteUrl }}"
+              branch: "develop"
+              jvm_memory: "${{ parameters.jvm_memory }}"
+              cpu_limit: "${{ parameters.cpu_limit }}"
+              memory_limit: "${{ parameters.memory_limit }}"
+              replicas: 1
+              sonar_enabled: ${{ parameters.sonar_enabled }}
+
+    # 5. Create a GitOps Pull Request to Central Repository
+    - id: create-gitops-pr
+      name: Submit GitOps Pull Request to Centralized CI/CD Config
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?repo=jenkins-backstage-2026-poc1&owner=nubenetes
+        branchName: register-${{ parameters.component_id }}
+        title: "feat(gitops): Register ${{ parameters.component_id }} in dev inventory"
+        description: |
+          ### Automated Microservice Registration via Backstage Scaffolder
+          - **Service:** `${{ parameters.component_id }}`
+          - **Team:** `${{ parameters.team }}`
+          - **Repository:** `${{ steps.publish-app-repo.output.remoteUrl }}`
+          - **Target Environment:** `dev`
+
+          Once merged, the **Seed_Job_Pattern_B** will automatically inject the `SharedJenkinsfile`
+          and provision the Jenkins pipeline under folder `dev/${{ parameters.team }}/${{ parameters.component_id }}`.
+        sourcePath: ./central-config-workspace
+
+    # 6. Register in Backstage Catalog
+    - id: register-catalog
+      name: Register Component in Backstage Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish-app-repo.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: New Microservice Source Repository (Zero Jenkinsfile)
+        url: ${{ steps.publish-app-repo.output.remoteUrl }}
+      - title: GitOps Registration Pull Request (Central Config Repo)
+        url: ${{ steps.create-gitops-pr.output.remoteUrl }}
+      - title: View in Backstage Software Catalog
+        icon: catalog
+        entityRef: ${{ steps.register-catalog.output.entityRef }}
