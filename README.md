@@ -231,27 +231,30 @@ In **Pattern A**, the continuous integration architecture relies on the **GitHub
 The reactive discovery engine executes a 6-stage discovery and lifecycle flow:
 
 ```mermaid
-flowchart TD
-    subgraph Phase1["Phase 1: SCM Scanning & Marker Detection"]
-        A["1. Scan GitHub Organization<br/>organizationFolder('nubenetes')<br/>Periodic SCM API Indexing"]
-        B["2. Detect Marker Jenkinsfile<br/>workflowMultiBranchFactory<br/>Filters repos with local Jenkinsfile"]
+flowchart LR
+    subgraph P1["Phase 1: SCM Scanning"]
+        direction TB
+        A1["1. Scan Organization<br/>organizationFolder('nubenetes')<br/>Periodic / Webhook Indexing"]
+        A2["2. Detect Marker File<br/>workflowMultiBranchFactory<br/>Identifies local Jenkinsfile"]
+        A1 --> A2
     end
 
-    subgraph Phase2["Phase 2: Branch & PR Filter Evaluation"]
-        C["3. Regex Branch Discovery<br/>sourceRegexFilter('main|develop|*')<br/>Discovers active branches"]
-        D["4. Pull Request Discovery & Trust<br/>gitHubPullRequestDiscovery(strategy: 1)<br/>Builds pre-merge PR head vs target"]
+    subgraph P2["Phase 2: Branch & PR Filtering"]
+        direction TB
+        B1["3. Regex Branch Discovery<br/>sourceRegexFilter('main|develop|*')<br/>Discovers matching branches"]
+        B2["4. Pull Request Discovery<br/>gitHubPullRequestDiscovery<br/>Pre-merge testing vs target"]
+        B1 --> B2
     end
 
-    subgraph Phase3["Phase 3: Pipeline Instantiation & Retention"]
-        E["5. Local Jenkinsfile Execution<br/>cpsScm with local scriptPath<br/>Runs pipeline from app repo"]
-        F["6. Orphan Branch Discarder<br/>orphanedItemStrategy(discard: 7d)<br/>Prunes deleted branch jobs"]
+    subgraph P3["Phase 3: Pipeline & Retention"]
+        direction TB
+        C1["5. Local Pipeline Execution<br/>cpsScm (local scriptPath)<br/>Runs pipeline from app repo"]
+        C2["6. Orphan Branch Discarder<br/>orphanedItemStrategy(7d)<br/>Prunes merged branch jobs"]
+        C1 --> C2
     end
 
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
+    P1 --> P2
+    P2 --> P3
 ```
 
 #### Step-by-Step Mechanics:
@@ -302,27 +305,30 @@ Pattern B represents an **inventory-driven GitOps model** where application repo
 The Job DSL Seed Job (`job-dsl/seed-job-pattern-b.groovy`) executes a 6-stage provisioning lifecycle:
 
 ```mermaid
-flowchart TD
-    subgraph Phase1["Phase 1: Input Ingestion"]
-        A["1. Parse YAML Inventories<br/>inventories/{dev,pre,pro}.yaml<br/>Parsed via YamlSlurper"]
-        B["2. Ingest Central Template<br/>jenkins-templates/SharedJenkinsfile<br/>Loaded via readFileFromWorkspace"]
+flowchart LR
+    subgraph P1["Phase 1: Input Ingestion"]
+        direction TB
+        A1["1. Parse Inventories<br/>inventories/{dev,pre,pro}.yaml<br/>Parsed via YamlSlurper"]
+        A2["2. Ingest Shared Template<br/>Shared Jenkinsfile Template<br/>via readFileFromWorkspace"]
+        A1 --> A2
     end
 
-    subgraph Phase2["Phase 2: Hierarchy & Binding"]
-        C["3. Provision Folder Tree<br/>env / team / app<br/>e.g. dev/e-commerce/gateway"]
-        D["4. Dynamic Parameter Binding<br/>Git URL, Branch, JVM Flags,<br/>CPU/Memory Limits, Namespace"]
+    subgraph P2["Phase 2: Hierarchy & Binding"]
+        direction TB
+        B1["3. Folder Hierarchy<br/>env / team / app structure<br/>(dev/ecommerce/gateway)"]
+        B2["4. Dynamic Parameters<br/>Git URL, Branch, JVM Flags,<br/>CPU/Memory & Namespace"]
+        B1 --> B2
     end
 
-    subgraph Phase3["Phase 3: Pipeline Injection & Lifecycle"]
-        E["5. Direct CPS Script Injection<br/>definition { cps { script(...) } }<br/>Full Replay & GUI Transparency Active"]
-        F["6. Zero-Touch Garbage Collection<br/>removedJobAction('DELETE')<br/>Auto-purges orphaned pipelines"]
+    subgraph P3["Phase 3: Injection & Lifecycle"]
+        direction TB
+        C1["5. Direct Script Injection<br/>script(SharedJenkinsfile)<br/>Full Replay & UI Transparency"]
+        C2["6. Zero-Touch Cleanup<br/>removedJobAction: 'DELETE'<br/>Auto-purges removed pipelines"]
+        C1 --> C2
     end
 
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
+    P1 --> P2
+    P2 --> P3
 ```
 
 #### Step-by-Step Mechanics:
